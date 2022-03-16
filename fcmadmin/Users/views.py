@@ -28,9 +28,11 @@ User = get_user_model()
 
 class UserCreateView(generics.CreateAPIView):
     """
-    Cоздание нового пользователя при базовой регистрации
+    Cоздание нового пользователя при базовой регистрации -
+    только администратор fcm или уже зарегистрированный пользователь может создать нового пользователя.
     """
     serializer_class = UserDetailSerializer
+    permission_classes = (permissions.IsAuthenticated, IsSuperuser, )
 
 
 class UserListView(generics.ListAPIView):
@@ -74,7 +76,7 @@ class ProfileDetailView(generics.RetrieveAPIView):
 
 class UserDetailProfile(generics.UpdateAPIView):
     """
-    Просмотр и редактирование данных пользователя
+    Просмотр и редактирование данных профиля пользователя.
     """
     parser_classes = (parsers.MultiPartParser,)
     serializer_class = ProfileDetailSerializer
@@ -93,7 +95,7 @@ class UserDetailProfile(generics.UpdateAPIView):
 @api_view(["POST"])
 def user_login(request, format=None):
     """
-    Авторизация пользователя, авторизованному пользователю выдается токен
+    Авторизация пользователя, авторизованному пользователю выдаются токены.
     """
     serializer = LoginSerializer(data=request.data)
     # Проверим валидность данных, переданных нам клиентской стороной.

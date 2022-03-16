@@ -1,6 +1,15 @@
 from django.utils.translation import gettext_lazy as _
 
 
+class Shape:
+    CIRCLE = 'cir'
+    RECTANGULAR = 'rec'
+    shape_choices = [
+        (CIRCLE, _('circle')),
+        (RECTANGULAR, _('rectangular')),
+    ]
+
+
 class Sex:
     MALE = 'm'
     FEMALE = 'f'

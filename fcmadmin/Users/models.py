@@ -50,7 +50,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     Кастомная модель пользователя.
     Здесь храним информацию, связанную со входом в систему.
     """
-    email = models.EmailField(_('email address'), blank=False, null=False)
+    email = models.EmailField(_('email address'), blank=False, null=False, unique=True)
     phone = models.CharField(_('phone number'), max_length=30, blank=True, null=False)
     # Пользователя можно забанить по этому полю:
     isActive = models.BooleanField(_('is active'), default=True)
@@ -58,6 +58,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     #выставляется дата желаемого удаления пользователя:
     datetimeDeletion = models.DateTimeField(_('removal time'), blank=True, null=True)
     lastLogin = models.DateTimeField(_('last entrance'), auto_now=True)
+    whoAdded = models.OneToOneField('self', on_delete=models.SET_NULL, null=True, blank=False, related_name='added')
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
