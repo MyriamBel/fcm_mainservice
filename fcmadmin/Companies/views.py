@@ -16,5 +16,5 @@ class FranchiseAddView(generics.CreateAPIView):
     """
     serializer_class = FranchiseAllFieldsSerializer
     permission_classes = (permissions.IsAuthenticated, )
-    parser_classes = (parsers.MultiPartParser, )
+    # parser_classes = (parsers.MultiPartParser, )
     queryset = Franchise.objects.all()
