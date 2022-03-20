@@ -6,8 +6,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'fcmadminDatabase',
-        'USER': 'fcmadminDBAdmin',
+        'NAME': 'fcmadmindatabase',
+        'USER': 'fcmadmindbadmin',
         'PASSWORD': 'postgres1',
         'HOST': 'localhost',
         'PORT': '5432',
