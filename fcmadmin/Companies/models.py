@@ -16,12 +16,8 @@ class Franchise(models.Model):
     name = models.CharField(_('name'), max_length=100, unique=True, null=False, blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
-    franchiseOwner = models.OneToOneField(
-        User, on_delete=models.PROTECT, null=False, blank=False
-    )
-    franchiseFounder = models.ManyToManyField(
-        User, blank=True, related_name='franchises'
-    )
+    franchiseOwner = models.OneToOneField(User, on_delete=models.PROTECT, blank=True)
+    franchiseFounder = models.ManyToManyField(User, blank=True, related_name='franchises')
 
     class Meta:
         verbose_name = _('franchise')
@@ -42,11 +38,10 @@ class Company(models.Model):
     """
     name = models.CharField(_('name'), max_length=100, unique=True, null=False, blank=False)
     franchise = models.ForeignKey(
-        Franchise, on_delete=models.PROTECT, null=False, blank=False
-    )
+        Franchise, on_delete=models.PROTECT, blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
-    companyDirector = models.OneToOneField(User, on_delete=models.PROTECT, null=False, blank=True)
+    companyDirector = models.OneToOneField(User, on_delete=models.PROTECT, blank=True)
     companyFounder = models.ManyToManyField(User, blank=True, related_name='companies')
 
     class Meta:
@@ -65,12 +60,12 @@ class ServicePlace(models.Model):
     """
     name = models.CharField(_('name'), max_length=100, null=False, blank=False)
     company = models.ForeignKey(
-        Company, on_delete=models.PROTECT, null=False, blank=False
+        Company, on_delete=models.PROTECT, blank=False
     )
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     servicePlaceDirector = models.OneToOneField(User, on_delete=models.PROTECT)
-    city = models.ForeignKey(City, on_delete=models.PROTECT, null=False, blank=True)
+    city = models.ForeignKey(City, on_delete=models.PROTECT, blank=True)
     street = models.CharField(_('street'), max_length=100, null=False, blank=True)
     houseNumber = models.CharField(_('house number'), max_length=10, null=False, blank=True)
     roomNumber = models.CharField(_('number room'), max_length=10, null=False, blank=True)
@@ -99,7 +94,7 @@ class StoreHouse(models.Model):
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     description = models.CharField(max_length=300, null=False, blank=True)
     #несколько складов могут относиться к 1 точке обслуживания, при этом склада без точки обслуживания не существует
-    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.PROTECT, null=False, blank=False)
+    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.PROTECT, blank=False)
 
     class Meta:
         verbose_name = _('storehouse')
@@ -115,8 +110,7 @@ class Room(models.Model):
     Точка обслуживания может иметь 1 и более помещений, как, например, кафе.
     """
     name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False,
-                                     blank=False)
+    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
 
@@ -135,8 +129,7 @@ class Table(models.Model):
     распределения нагрузки между официантами в больших заведениях.
     """
     name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    room = models.ForeignKey(Room, on_delete=models.CASCADE, null=False,
-                             blank=False)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     shape = models.CharField(_('table shape'), max_length=3, choices=Shape.shape_choices, default=Shape.RECTANGULAR)
@@ -160,8 +153,7 @@ class Seat(models.Model):
     которое заведение может вместить, учета обслуженных гостей и т.д.
     """
     name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    table = models.ForeignKey(Table, on_delete=models.CASCADE, null=False,
-                              blank=False)
+    table = models.ForeignKey(Table, on_delete=models.CASCADE, blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
 
@@ -184,8 +176,7 @@ class CookingPlace(models.Model):
     разделе Номенклатура-Блюда, вкладка Продажи.
     """
     name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False,
-                                     blank=False)
+    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     # несколько мест реализации относится к нескольким складам
@@ -209,8 +200,7 @@ class SalePlace(models.Model):
     К месту реализации привязывается схема столов в заведении, настраиваются принтеры для печати пречеков.
     """
     name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False,
-                                     blank=False)
+    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     #несколько мест реализации может относиться к нескольким местам приготовления(кухням)
