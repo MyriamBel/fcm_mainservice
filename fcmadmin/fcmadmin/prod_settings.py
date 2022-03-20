@@ -20,7 +20,7 @@ with open(os.path.join(BASE_DIR, 'fcmadmin/secret_key.txt')) as f:
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '178.124.179.94', '192.168.1.30']
+ALLOWED_HOSTS = ['localhost', '178.124.179.94', '192.168.1.30', 'alexws.com']
 
 SESSION_COOKIE_SECURE = True
 
