@@ -20,7 +20,7 @@ class Franchise(models.Model):
         User, on_delete=models.PROTECT, null=False, blank=False
     )
     franchiseFounder = models.ManyToManyField(
-        User, blank=True
+        User, blank=True, related_name='franchises'
     )
 
     class Meta:
@@ -47,7 +47,7 @@ class Company(models.Model):
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     companyDirector = models.OneToOneField(User, on_delete=models.PROTECT, null=False, blank=True)
-    companyFounder = models.ManyToManyField(User, blank=True)
+    companyFounder = models.ManyToManyField(User, blank=True, related_name='companies')
 
     class Meta:
         verbose_name = _('company')
