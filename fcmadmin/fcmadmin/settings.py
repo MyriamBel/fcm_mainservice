@@ -30,7 +30,7 @@ except ImportError:
     from .prod_settings import *
 
 INSTALLED_APPS = [
-    'modeltranslation',
+    # 'modeltranslation',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
