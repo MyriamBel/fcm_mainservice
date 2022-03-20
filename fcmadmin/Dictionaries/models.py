@@ -1,10 +1,21 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from Companies.models import ServicePlace
 
 
-class DictionariesTag(models.Model):
+# class NomenclatureCatalog(models.Model):
+#     """
+#     Каталог справочников. Каждый каталог привязан к своей точке обслуживания.
+#     Каталог справочников определяет, к какой точке обслуживания относится тот или иной справочник.
+#     Это класс-посредник, он явно нигде не фигурирует и нужен лишь для изолирования справочников друг от друга
+#     по признаку принадлежности к той или иной точке обслуживания.
+#     """
+#     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False, blank=False)
+#
+
+
+class DishTag(models.Model):
     """
-    Справочник тегов.
     Тэг - это специальная метка, которая объединяет несколько разных блюд из разных групп (папок).
     Например, мы можем отметить тэгом "Маржинальные" все блюда с высокой наценкой,
     и смотреть отчет с такими блюдами, сгрупированными в один блок
@@ -12,6 +23,7 @@ class DictionariesTag(models.Model):
     """
     name = models.CharField(_('name'), max_length=50, null=False, blank=False)
     active = models.BooleanField(_('deleted'), default=True)
+    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False, blank=False)
 
     class Meta:
         verbose_name = _('tag')
@@ -21,7 +33,7 @@ class DictionariesTag(models.Model):
         return _(self.name)
 
 
-class DictionariesMeasureUnit(models.Model):
+class MeasureUnit(models.Model):
     """
     Справочник единиц измерения.
     Здесь можно настроить единицы измерения (килограммы, граммы, литры и т.д.),
@@ -32,6 +44,7 @@ class DictionariesMeasureUnit(models.Model):
     shortName = models.CharField(_('name'), max_length=10, null=False, blank=False)
     fullName = models.CharField(_('full name'), max_length=50, null=False, blank=False)
     active = models.BooleanField(_('deleted'), default=True)
+    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False, blank=False)
 
     class Meta:
         verbose_name = _('measure unit')
@@ -41,7 +54,7 @@ class DictionariesMeasureUnit(models.Model):
         return _(self.name)
 
 
-class DictionariesPackingUnits(models.Model):
+class PackingUnits(models.Model):
     """
         Справочник фасовок.
         Фасовками удобно приходовать на склад ингредиенты, которые поступают в виде упаковок,
@@ -54,12 +67,14 @@ class DictionariesPackingUnits(models.Model):
         Для одного и того же ингредиента может быть много фасовок (например, рис по 350 г, 500 г).
         """
     name = models.CharField(_('name'), max_length=50, null=False, blank=False)
-    #parent ratio - соотношение к родительской единице измерения. Например, для пачек риса это 0,35*1кг
+    # parent ratio - соотношение к родительской единице измерения. Например, для пачек риса это 0,35*1кг
     parentRatio = models.DecimalField(_('parent ratio'), null=False, blank=False, decimal_places=3, max_digits=5)
     active = models.BooleanField(_('deleted'), default=True)
+    # родительская единица измерения - та, соотношение к которой вычисляем.
     parentUnit = models.ForeignKey(
-        DictionariesMeasureUnit, on_delete=models.PROTECT, related_name='measureUnit', null=False, blank=False
+        MeasureUnit, on_delete=models.PROTECT, related_name='measureUnit', null=False, blank=False
     )
+    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False, blank=False)
 
     class Meta:
         verbose_name = _('measure unit')

@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from base.services import get_image_upload, get_video_upload, delete_old_file
 from base.choices import Shape
 from django.contrib.auth import get_user_model
-from ..Regions.models import City
+from Regions.models import City
 
 User = get_user_model()
 
@@ -17,10 +17,10 @@ class Franchise(models.Model):
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     franchiseOwner = models.OneToOneField(
-        User, related_name='franchiseOwner', on_delete=models.PROTECT, null=False, blank=False
+        User, on_delete=models.PROTECT, null=False, blank=False
     )
     franchiseFounder = models.ManyToManyField(
-        User, related_name='franchiseFounder', blank=True
+        User, blank=True
     )
 
     class Meta:
@@ -42,35 +42,16 @@ class Company(models.Model):
     """
     name = models.CharField(_('name'), max_length=100, unique=True, null=False, blank=False)
     franchise = models.ForeignKey(
-        Franchise, on_delete=models.PROTECT, related_name='companies', null=False, blank=False
+        Franchise, on_delete=models.PROTECT, null=False, blank=False
     )
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
-    companyDirector = models.OneToOneField(User, related_name='companies', on_delete=models.PROTECT)
-    companyFounder = models.ManyToManyField(
-        User, related_name='companyFounder', blank=True
-    )
+    companyDirector = models.OneToOneField(User, on_delete=models.PROTECT, null=False, blank=True)
+    companyFounder = models.ManyToManyField(User, blank=True)
 
     class Meta:
         verbose_name = _('company')
         verbose_name_plural = _('companies')
-
-    def __str__(self):
-        return _(self.name)
-
-
-class StoreHouse(models.Model):
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
-    company = models.ForeignKey(
-        Company, on_delete=models.PROTECT, related_name='storeHouses', null=False, blank=False
-    )
-    description = models.CharField(max_length=300, null=False, blank=True)
-
-    class Meta:
-        verbose_name = _('storehouse')
-        verbose_name_plural = _('storehouse')
 
     def __str__(self):
         return _(self.name)
@@ -84,12 +65,12 @@ class ServicePlace(models.Model):
     """
     name = models.CharField(_('name'), max_length=100, null=False, blank=False)
     company = models.ForeignKey(
-        Company, on_delete=models.PROTECT, related_name='servicePlaces', null=False, blank=False
+        Company, on_delete=models.PROTECT, null=False, blank=False
     )
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
-    servicePlaceDirector = models.OneToOneField(User, related_name='servicePlaces', on_delete=models.PROTECT)
-    city = models.ForeignKey(City, on_delete=models.PROTECT, null=False, blank=True, related_name='servicesPlaces')
+    servicePlaceDirector = models.OneToOneField(User, on_delete=models.PROTECT)
+    city = models.ForeignKey(City, on_delete=models.PROTECT, null=False, blank=True)
     street = models.CharField(_('street'), max_length=100, null=False, blank=True)
     houseNumber = models.CharField(_('house number'), max_length=10, null=False, blank=True)
     roomNumber = models.CharField(_('number room'), max_length=10, null=False, blank=True)
@@ -98,10 +79,31 @@ class ServicePlace(models.Model):
     noteAddress = models.CharField(_('notes to the address'), max_length=100, null=False, blank=True)
     about = models.CharField(_('about object'), max_length=300, null=False, blank=True)
 
-
     class Meta:
         verbose_name = _('service point')
         verbose_name_plural = _('service points')
+
+    def __str__(self):
+        return _(self.name)
+
+
+class StoreHouse(models.Model):
+    """
+    На складах хранятся остатки продуктов (блюд, полуфабрикатов, ингредиентов, модификаторов) заведения.
+    Склады в дальнейшем указываются во всех документах (например, нельзя создать приходную накладную, не указав склад,
+    на который поступят продукты из накладной) раздела Склад, по ним строятся отчеты по по продуктам.
+    При создании склада обязательно указывается организация, которой этот склад принадлежит.
+    """
+    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
+    isActive = models.BooleanField(_('is active'), default=True)
+    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
+    description = models.CharField(max_length=300, null=False, blank=True)
+    #несколько складов могут относиться к 1 точке обслуживания, при этом склада без точки обслуживания не существует
+    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.PROTECT, null=False, blank=False)
+
+    class Meta:
+        verbose_name = _('storehouse')
+        verbose_name_plural = _('storehouse')
 
     def __str__(self):
         return _(self.name)
@@ -113,7 +115,7 @@ class Room(models.Model):
     Точка обслуживания может иметь 1 и более помещений, как, например, кафе.
     """
     name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, related_name='rooms', null=False,
+    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False,
                                      blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
@@ -133,7 +135,7 @@ class Table(models.Model):
     распределения нагрузки между официантами в больших заведениях.
     """
     name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='tables', null=False,
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, null=False,
                              blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
@@ -158,7 +160,7 @@ class Seat(models.Model):
     которое заведение может вместить, учета обслуженных гостей и т.д.
     """
     name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    table = models.ForeignKey(Table, on_delete=models.CASCADE, related_name='seats', null=False,
+    table = models.ForeignKey(Table, on_delete=models.CASCADE, null=False,
                               blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
@@ -166,6 +168,32 @@ class Seat(models.Model):
     class Meta:
         verbose_name = _('seat')
         verbose_name_plural = _('seats')
+
+    def __str__(self):
+        return _(self.name)
+
+
+class CookingPlace(models.Model):
+    """
+    Место приготовления - это кухня заведения (т.е. место, где готовится то или иное блюдо - например,
+    бар тоже может быть местом приготовления для кофе или коктейлей).
+    В местах приготовления указывается как его название, так и склад,
+    которому принадлежит это место и с которого потом будут списываться продукты для блюд,
+    готовящихся в месте приготовления. Кроме того, в месте приготовления указывается принтер,
+    на котором будут распечатываться "бегунки" на кухню/бар. Место приготовления можно указать для каждого блюда в
+    разделе Номенклатура-Блюда, вкладка Продажи.
+    """
+    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
+    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False,
+                                     blank=False)
+    isActive = models.BooleanField(_('is active'), default=True)
+    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
+    # несколько мест реализации относится к нескольким складам
+    storeHouse = models.ManyToManyField(StoreHouse, blank=True)
+
+    class Meta:
+        verbose_name = _('place of sale')
+        verbose_name_plural = _('places of sale')
 
     def __str__(self):
         return _(self.name)
@@ -181,10 +209,12 @@ class SalePlace(models.Model):
     К месту реализации привязывается схема столов в заведении, настраиваются принтеры для печати пречеков.
     """
     name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, related_name='seats', null=False,
+    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False,
                                      blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
+    #несколько мест реализации может относиться к нескольким местам приготовления(кухням)
+    cookingPlace = models.ManyToManyField(CookingPlace, blank=True)
 
     class Meta:
         verbose_name = _('place of sale')
@@ -192,10 +222,5 @@ class SalePlace(models.Model):
 
     def __str__(self):
         return _(self.name)
-
-
-class CookingPlace(models.Model):
-
-
 
 
