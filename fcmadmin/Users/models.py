@@ -39,7 +39,7 @@ class CustomUserManager(BaseUserManager):
         Создание экземпляра модели SuperUser и сохранение в БД с закодированным паролем.
         """
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('isActive', True)
+        extra_fields.setdefault('is_active', True)
         if extra_fields.get('is_superuser') is not True:
             raise ValueError(_('Superuser must have is_superuser=True.'))
         return self.create_user(password, email, **extra_fields)
@@ -53,7 +53,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(_('email address'), blank=False, null=False, unique=True)
     phone = models.CharField(_('phone number'), max_length=30, blank=True, null=False)
     # Пользователя можно забанить по этому полю:
-    isActive = models.BooleanField(_('is active'), default=True)
+    is_active = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     #выставляется дата желаемого удаления пользователя:
     datetimeDeletion = models.DateTimeField(_('removal time'), blank=True, null=True)
