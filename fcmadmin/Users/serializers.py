@@ -46,13 +46,23 @@ class UserDetailSerializer(serializers.ModelSerializer):
         min_length=8,
         write_only=True,
     )
+    lastLogin = serializers.CharField(source='last_login', required=False)
+    isActive = serializers.CharField(source='is_active')
 
     class Meta:
         model = User
-        fields = ('password', 'email')
+        exclude = ("last_login", "is_active")
 
     def create(self, validated_data):
+        for i in validated_data:
+            print(i)
         return User.objects.create_user(**validated_data)
+
+    def get_isActive(self):
+        return self.is_active
+
+    def get_lastLogin(self):
+        return self.last_login
 
 
 class ProfileDetailSerializer(serializers.ModelSerializer):
@@ -204,7 +214,15 @@ class UserListSerializer(serializers.ModelSerializer):
     """
     Данные о пользователе для вывода в списке пользователей.
     """
+    lastLogin = serializers.CharField(source='last_login')
+    isActive = serializers.CharField(source='is_active')
 
     class Meta:
         model = User
-        exclude = ('password', )
+        exclude = ("last_login", "is_active", "password")
+
+    def get_isActive(self):
+        return self.is_active
+
+    def get_lastLogin(self):
+        return self.last_login

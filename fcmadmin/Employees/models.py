@@ -3,6 +3,39 @@ from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from Companies.models import Company, Franchise, ServicePlace
 
+"""
+Группы пользователей, которые имеют отношение к тем или иным объектам франшизы(франшиза, сеть, заведение).
+Для групп определены разные правила доступа.
+Пользователи, входящие в состав основателей франшизы(FranchiseFounders) имеют право на управление своей франшизой.
+Пользователи из FranchiseDirector имеют право на управление ограниченной частью функционала, связанного с франшизой
+(просмотр отчётов, управление заведениями).
+Пользователи из FranchiseMarketer имеют право на управление акциями по всей франшизе.
+Пользователи из FranchiseSupervisor имеют право на контроль заведений.
+FranchiseAccountant имеют право доступа к финансовой части франшизы(отчёты, установка цен)
+FranchiseHR имеют право управления пользователями по всей франшизе(создание аккаунтов сотрудников и тд)
+CompanyFounders имеют право на управление своей сетью.
+CompanyDirector имеет право управления ограниченной частью функционала всей сети.
+CompanySupervisor имеет право контроля информации по своей сети.
+Пользователи из CompanyMarketer имеют право на управление акциями по всей сети.
+CompanyAccountant имеют право доступа к финансовой части сети(отчёты, установка цен)
+CompanyHR имеют право управления пользователями по всей сети(создание аккаунтов сотрудников и тд)
+ServicePlaceFounders - управление точкой обслуживания
+ServicePlaceDirector - ограниченная часть управления торговой точкой
+ServiceAccountant - бухгалтер заведения - финансовые операции по заведения
+ServicePlaceAdministrator - администратор заведения - управление персоналом(графики работ и тд)
+ServicePlaceCourier - работа с заказами к доставке
+ServicePlaceBarista - работа с заказами к доставке(частично) и на месте(создание, внесение позиций, расчёт)
+ServicePlaceWaiter - работа с заказами(создание, внесение позиций, расчёт)
+
+!!! Один аккаунт может иметь разные роли!!!
+1) FCM администратор создает по заявке пользователя, включает его в FranchiseFounders и создает связанный с ним
+    объект франшизы.
+2) FCM администратор создает по заявке пользователя CompanyFounders и объект сети.
+3) FCM администратор создает по заявке пользователя ServicePlaceFounders и объект торговой точки.
+4) 
+
+"""
+
 
 user = get_user_model()
 
@@ -13,6 +46,9 @@ class BaseStaff(models.Model):
 
 
 class BaseFranchiseStaff(BaseStaff):
+    """
+    Базовый класс сотрудников франшизы.
+    """
     brand = models.ForeignKey(Franchise, on_delete=models.PROTECT, null=False, blank=False)
 
     class Meta:
@@ -20,6 +56,9 @@ class BaseFranchiseStaff(BaseStaff):
 
 
 class BaseCompanyStaff(BaseStaff):
+    """
+    Базовый класс сотрудников компании(сети).
+    """
     company = models.ForeignKey(Company, on_delete=models.PROTECT, null=False, blank=False)
 
     class Meta:
@@ -27,6 +66,9 @@ class BaseCompanyStaff(BaseStaff):
 
 
 class BaseServicePlaceStaff(BaseStaff):
+    """
+    Базовый класс сотрудников отдельно взятого заведения.
+    """
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.PROTECT, null=False, blank=False)
 
     class Meta:
@@ -36,6 +78,7 @@ class BaseServicePlaceStaff(BaseStaff):
 class FranchiseFounders(BaseFranchiseStaff):
     """
     Учредители и акционеры франшизы.
+
     """
     founder = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
 

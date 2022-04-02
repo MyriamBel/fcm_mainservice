@@ -5,10 +5,20 @@ from django.contrib.auth import get_user_model
 from Companies.models import ServicePlace, StoreHouse
 from Dictionaries.models import MeasureUnit
 
+
 User = get_user_model()
 
 
-class Menu(models.Model):
+class BaseNomenclature(models.Model):
+    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
+    isActive = models.BooleanField(_('is active'), default=True)
+    dateAdded = models.DateTimeField(_('added date'), auto_now_add=True, editable=False)
+
+    class Meta:
+        abstract = True
+
+
+class Menu(BaseNomenclature):
     """
     В разделе можно создавать и настраивать "меню" - готовые наборы блюд на определенный день.
     Например, в столовой "рыбный день" - в четверг, другие блюда не продаются.
@@ -16,9 +26,6 @@ class Menu(models.Model):
     С помощью "меню" можно настроить отображение в четверг только рыбных блюд, все остальные блюда будут скрыты.
     Меню привязаны к заведению/точке обслуживания и их число для заведения неограничено.
     """
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('added date'), auto_now_add=True, editable=False)
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False, blank=False)
     description = models.CharField(_('description'), max_length=300, null=False, blank=True)
 
@@ -30,7 +37,7 @@ class Menu(models.Model):
         return _(self.name)
 
 
-class DishCategory(models.Model):
+class DishCategory(BaseNomenclature):
     """
     Категория (группа) блюд. Их можно группировать по определенным признакам.
     Например, "Напитки" или "Горячие бутерброды".
@@ -40,9 +47,6 @@ class DishCategory(models.Model):
     созданные для данного заведения.
     """
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False, blank=False)
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('added date'), auto_now_add=True, editable=False)
     description = models.CharField(_('description'), max_length=300, null=False, blank=True)
     menu = models.ForeignKey(Menu, blank=True, on_delete=models.SET_DEFAULT, default='')
     image = models.ImageField(_('image'), upload_to=get_image_upload, blank=True, null=True)
@@ -70,7 +74,7 @@ class DishCategory(models.Model):
         super(DishCategory, self).delete()
 
 
-class DishSubCategory(models.Model):
+class DishSubCategory(BaseNomenclature):
     """
     Категория (группа) блюд. Их можно группировать по определенным признакам.
     Например, "Напитки" или "Горячие бутерброды".
@@ -80,9 +84,6 @@ class DishSubCategory(models.Model):
     созданные для данного заведения.
     """
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False, blank=False)
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('added date'), auto_now_add=True, editable=False)
     description = models.CharField(_('description'), max_length=300, null=False, blank=True)
     dishCategory = models.ForeignKey(DishCategory, blank=True, on_delete=models.SET_DEFAULT, default='')
     #Категория может вкладываться в другую категорию - образуется иерархия категорий. Например: салаты-постные, без майонеза и т.д.
@@ -97,7 +98,7 @@ class DishSubCategory(models.Model):
         return _(self.name)
 
 
-class Dish(models.Model):
+class Dish(BaseNomenclature):
     """
     Блюдо - некоторый товар, продукт, который будет продаваться на кассовом терминале.
     Для него можно настроить техкарту (рецептуру), цены и себестоимость,
@@ -108,9 +109,6 @@ class Dish(models.Model):
     Блюдо может входить в подкатегорию.
     Блюдо однозначно относится к заведению. Каждое заведение создает свой набор блюд.
     """
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('added date'), auto_now_add=True, editable=False)
     description = models.CharField(_('description'), max_length=300, null=False, blank=True)
     #Единица измерения, в которых измеряется блюдо. Порции, литры, килограммы.
     measureUnit = models.ForeignKey(MeasureUnit, on_delete=models.PROTECT, null=False, blank=True)
@@ -132,7 +130,7 @@ class Dish(models.Model):
 """
 
 
-class IngredientsCategory(models.Model):
+class IngredientsCategory(BaseNomenclature):
     """
     Категория (группа) ингредиентов. Их можно группировать по определенным признакам.
     Например, "Молочные продукты" или "Скоропорт".
@@ -141,11 +139,8 @@ class IngredientsCategory(models.Model):
     чтобы отображать только категории, созданные для данного заведения.
     """
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False, blank=False)
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
     # единица измерения для категории
     measureUnit = models.ForeignKey(MeasureUnit, on_delete=models.PROTECT, null=False, blank=True)
-    dateJoined = models.DateTimeField(_('added date'), auto_now_add=True, editable=False)
     description = models.CharField(_('description'), max_length=300, null=False, blank=True)
     storeHouse = models.ManyToManyField(StoreHouse, blank=True)
     #Категория может вкладываться в другую категорию - образуется иерархия категорий. Например: скоропорт-молочка, мясо и т.д.
@@ -159,15 +154,12 @@ class IngredientsCategory(models.Model):
         return _(self.name)
 
 
-class Ingredients(models.Model):
+class Ingredients(BaseNomenclature):
     """
     Ингредиент – это базовый тип продукта, который входит в состав других продуктов
     (блюд, полуфабрикатов и модификаторов). Ингредиенты не продаются на кассовом терминале как самостоятельное блюдо и
     недоступны как часть других блюд. Набор ингредиентов в блюде является фиксированной и неизменяемой составляющей.
     """
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('added date'), auto_now_add=True, editable=False)
     description = models.CharField(_('description'), max_length=300, null=False, blank=True)
     measureUnit = models.ForeignKey(MeasureUnit, on_delete=models.PROTECT, null=False, blank=True)
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False, blank=False)
@@ -182,7 +174,7 @@ class Ingredients(models.Model):
         return _(self.name)
 
 
-class ModifiersCategory(models.Model):
+class ModifiersCategory(BaseNomenclature):
     """
     Категория (группа) модификаторов. Их можно группировать по определенным признакам.
     Например, "Соусы" или "Способы приготовления", или "Джемы".
@@ -191,9 +183,6 @@ class ModifiersCategory(models.Model):
     чтобы отображать только категории, созданные для данного заведения.
     """
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False, blank=False)
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('added date'), auto_now_add=True, editable=False)
     description = models.CharField(_('description'), max_length=300, null=False, blank=True)
     #Категория может вкладываться в другую категорию - образуется иерархия категорий. Например: скоропорт-молочка, мясо и т.д.
     parentCategory = models.ForeignKey('self', on_delete=models.CASCADE, null=False, blank=True)
@@ -208,16 +197,13 @@ class ModifiersCategory(models.Model):
         return _(self.name)
 
 
-class Modifiers(models.Model):
+class Modifiers(BaseNomenclature):
     """
     Модификатор – это изменяемая часть продукта, которая входит в состав данного продукта.
     Модификатор - это ингредиент или характеристика продукта, которая может меняться,
     в зависимости от пожеланий заказчика. Например, размер пиццы, объем кофе, топпинг или вид молока, посуда "с собой",
     используемые в приготовлении. Сам по себе отдельно модификатор не продается на кассовом терминале.
     """
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('added date'), auto_now_add=True, editable=False)
     description = models.CharField(_('description'), max_length=300, null=False, blank=True)
     # единица измерения модификатора
     measureUnit = models.ForeignKey(MeasureUnit, on_delete=models.PROTECT, null=False, blank=True)

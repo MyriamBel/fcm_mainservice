@@ -11,14 +11,23 @@ import uuid
 User = get_user_model()
 
 
-class Franchise(models.Model):
+class BaseOrgInfo(models.Model):
+    """
+    Базовые поля для сущностей, относящихся к точке обслуживания клиентов.
+    """
+    name = models.CharField(_('name'), max_length=100, unique=True, null=False, blank=False)
+    isActive = models.BooleanField(_('is active'), default=True)
+    dateAdded = models.DateTimeField(_('added date'), auto_now_add=True, editable=False)
+
+    class Meta:
+        abstract = True
+
+
+class Franchise(BaseOrgInfo):
     """
     Франшиза - некоторая торговая марка, объединяющая в себе несколько разных компаний.
     У франшизы есть один владелец и есть учредитель(-и).
     """
-    name = models.CharField(_('name'), max_length=100, unique=True, null=False, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
 
     class Meta:
         verbose_name = _('franchise')
@@ -28,7 +37,7 @@ class Franchise(models.Model):
         return _(self.name)
 
 
-class Company(models.Model):
+class Company(BaseOrgInfo):
     """
     Компания - некоторое юрлицо, которое действует под определенной вывеской(франшизой).
     У компании есть один директор и есть учредитель(-и).
@@ -37,11 +46,7 @@ class Company(models.Model):
     Организация обязательно указывается при создании нового склада и добавлении фискального
     регистратора/банковского терминала в систему.
     """
-    name = models.CharField(_('name'), max_length=100, unique=True, null=False, blank=False)
-    franchise = models.ForeignKey(
-        Franchise, on_delete=models.PROTECT, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
+    franchise = models.ForeignKey(Franchise, on_delete=models.PROTECT, blank=False)
 
     class Meta:
         verbose_name = _('company')
@@ -51,7 +56,7 @@ class Company(models.Model):
         return _(self.name)
 
 
-class ServicePlace(models.Model):
+class ServicePlace(BaseOrgInfo):
     """
     Точка обслуживания(оно же заведение) - место продаж/предоставления услуг, будь то кофейня, бар и т.д.
     У точки обслуживания есть руководитель(директор).
@@ -62,18 +67,13 @@ class ServicePlace(models.Model):
     генерируются автоматически при создании точки обслуживания.
     Пароль также генерируется автоматически и не может быть изменен пользователем.
     """
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    company = models.ForeignKey(
-        Company, on_delete=models.PROTECT, blank=False
-    )
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
-    city = models.ForeignKey(City, on_delete=models.PROTECT, blank=True)
+    company = models.ForeignKey(Company, on_delete=models.PROTECT, blank=False)
+    city = models.ForeignKey(City, on_delete=models.PROTECT, blank=False)
     street = models.CharField(_('street'), max_length=100, null=False, blank=True)
     houseNumber = models.CharField(_('house number'), max_length=10, null=False, blank=True)
     roomNumber = models.CharField(_('number room'), max_length=10, null=False, blank=True)
-    latitude = models.DecimalField(_('latitude'), max_digits=10, decimal_places=7, null=False, blank=True)  # долгота
-    longitude = models.DecimalField(_('longitude'), max_digits=10, decimal_places=7, null=False, blank=True)  # широта
+    latitude = models.DecimalField(_('latitude'), max_digits=10, decimal_places=7, null=True, blank=True)  # долгота
+    longitude = models.DecimalField(_('longitude'), max_digits=10, decimal_places=7, null=True, blank=True)  # широта
     noteAddress = models.CharField(_('notes to the address'), max_length=100, null=False, blank=True)
     about = models.CharField(_('about object'), max_length=300, null=False, blank=True)
     loginCheckoutTerminal = models.CharField(
@@ -81,7 +81,7 @@ class ServicePlace(models.Model):
         unique=True
     )
     passwordCheckoutTerminal = models.CharField(
-        _('password for checkout terminal registration'), max_length=50, editable=False
+        _('password for checkout terminal registration'), null=False, max_length=200, editable=False
     )
 
     class Meta:
@@ -115,16 +115,13 @@ class ServicePlace(models.Model):
         return password == hashlib.sha256(salt.encode() + user_password.encode()).hexdigest()
 
 
-class StoreHouse(models.Model):
+class StoreHouse(BaseOrgInfo):
     """
     На складах хранятся остатки продуктов (блюд, полуфабрикатов, ингредиентов, модификаторов) заведения.
     Склады в дальнейшем указываются во всех документах (например, нельзя создать приходную накладную, не указав склад,
     на который поступят продукты из накладной) раздела Склад, по ним строятся отчеты по по продуктам.
     При создании склада обязательно указывается организация, которой этот склад принадлежит.
     """
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     description = models.CharField(max_length=300, null=False, blank=True)
     #несколько складов могут относиться к 1 точке обслуживания, при этом склада без точки обслуживания не существует
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.PROTECT, blank=False)
@@ -137,15 +134,12 @@ class StoreHouse(models.Model):
         return _(self.name)
 
 
-class Room(models.Model):
+class Room(BaseOrgInfo):
     """
     Помещение - обособленная площадь, относящаяся к точке обслуживания, предназначено для размещения посетителей.
     Точка обслуживания может иметь 1 и более помещений, как, например, кафе.
     """
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
 
     class Meta:
         verbose_name = _('room')
@@ -155,16 +149,13 @@ class Room(models.Model):
         return _(self.name)
 
 
-class Table(models.Model):
+class Table(BaseOrgInfo):
     """
     Стол - относится к некоторому помещению, имеет места для рассадки гостей.
     Столы в системе предназначены для учета гостей и заказов,
     распределения нагрузки между официантами в больших заведениях.
     """
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
     room = models.ForeignKey(Room, on_delete=models.CASCADE, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     shape = models.CharField(_('table shape'), max_length=3, choices=Shape.shape_choices, default=Shape.RECTANGULAR)
     minCapacity = models.IntegerField(_('minimum number of guests'), ) #минимальное число гостей
     maxCapacity = models.IntegerField(_('maximum number of guests')) #максимальное число гостей
@@ -180,15 +171,12 @@ class Table(models.Model):
         return _(self.name)
 
 
-class Seat(models.Model):
+class Seat(BaseOrgInfo):
     """
     Место. Каждое место относится к определенному столу и предназначено для контроля количества гостей,
     которое заведение может вместить, учета обслуженных гостей и т.д.
     """
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
     table = models.ForeignKey(Table, on_delete=models.CASCADE, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
 
     class Meta:
         verbose_name = _('seat')
@@ -198,7 +186,7 @@ class Seat(models.Model):
         return _(self.name)
 
 
-class CookingPlace(models.Model):
+class CookingPlace(BaseOrgInfo):
     """
     Место приготовления - это кухня заведения (т.е. место, где готовится то или иное блюдо - например,
     бар тоже может быть местом приготовления для кофе или коктейлей).
@@ -208,10 +196,7 @@ class CookingPlace(models.Model):
     на котором будут распечатываться "бегунки" на кухню/бар. Место приготовления можно указать для каждого блюда в
     разделе Номенклатура-Блюда, вкладка Продажи.
     """
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     # несколько мест реализации относится к нескольким складам
     storeHouse = models.ManyToManyField(StoreHouse, blank=True)
 
@@ -237,7 +222,7 @@ class CookingPlace(models.Model):
 #         return '{} - {}'.format(self.servicePlace, self.user)
 
 
-class Terminal(models.Model):
+class Terminal(BaseOrgInfo):
     """
     Кассовый терминал. Кассовый терминал - это некоторый экземпляр кассового приложения, установленный в точке
     реализации в некотором заведении. Каждый кассовый терминал относится только к определенному заведению и
@@ -251,10 +236,7 @@ class Terminal(models.Model):
     Серийный номер устройства
     Имеи устройства
     """
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     deviceManufacturer = models.CharField(_('device manufacturer'), max_length=50, null=False, blank=False)
     deviceModel = models.CharField(_('device model'), max_length=50, null=False, blank=False)
     deviceSerialNumber = models.CharField(_('device serial number'), max_length=250, null=False, blank=False)
@@ -269,7 +251,7 @@ class Terminal(models.Model):
         return _(self.name)
 
 
-class SalePlace(models.Model):
+class SalePlace(BaseOrgInfo):
     """
     Место реализации - все точки/сервисы, которые предоставляются из данной точки реализации.
     Это может быть выездная торговля, доставка в номер, бар(как отдельная точка в кафе).
@@ -278,10 +260,7 @@ class SalePlace(models.Model):
     место реализации отображается в чеках и кассовых сменах этого терминала и отчетах бэк-офиса.
     К месту реализации привязывается схема столов в заведении, настраиваются принтеры для печати пречеков.
     """
-    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, blank=False)
-    isActive = models.BooleanField(_('is active'), default=True)
-    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     #несколько мест реализации может относиться к нескольким местам приготовления(кухням)
     cookingPlace = models.ManyToManyField(CookingPlace, blank=True)
     checkoutTerminal = models.ForeignKey(Terminal, null=False, blank=True, on_delete=models.PROTECT)

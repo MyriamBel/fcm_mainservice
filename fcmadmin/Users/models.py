@@ -21,7 +21,6 @@ class CustomUserManager(BaseUserManager):
         if email == '':
             raise ValueError(_('The email must be set'))
         extra_fields.setdefault('is_active', True)
-        extra_fields.setdefault('is_superuser', False)
         if not email == '':
             email = self.normalize_email(email.lower())
             if UserAdditionalEmail.objects.filter(email=email).exists() or \
@@ -45,7 +44,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(password, email, **extra_fields)
 
 
-class CustomUser(AbstractBaseUser, PermissionsMixin):
+class CustomUser(AbstractBaseUser):
     """
     Кастомная модель пользователя.
     Здесь храним информацию, связанную со входом в систему.
@@ -57,7 +56,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     #выставляется дата желаемого удаления пользователя:
     datetimeDeletion = models.DateTimeField(_('removal time'), blank=True, null=True)
-    lastLogin = models.DateTimeField(_('last entrance'), auto_now=True)
     whoAdded = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='added')
 
     USERNAME_FIELD = 'email'

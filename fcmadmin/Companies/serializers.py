@@ -31,7 +31,7 @@ class TerminalSerializer(serializers.Serializer):
         fields = '__all__'
 
 
-class ServicePointTerminalRegistrationSerializer(serializers.Serializer):
+class ServicePlaceTerminalRegistrationSerializer(serializers.Serializer):
     """
     Регистрация терминала в торговых точках.
     """
@@ -91,6 +91,7 @@ class ServicePointTerminalRegistrationSerializer(serializers.Serializer):
             'terminalToken': token,
         }
 
+
 class CompanySerializer(serializers.ModelSerializer):
     """
     Компании.
@@ -100,13 +101,25 @@ class CompanySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ServicePlaceSerializer(serializers.ModelSerializer):
+class ServicePlaceRegisterSerializer(serializers.ModelSerializer):
     """
     Точки обслуживания.
     """
+
     class Meta:
         model = ServicePlace
-        fields = '__all__'
+        exclude = ['passwordCheckoutTerminal', 'loginCheckoutTerminal']
+
+
+class ServicePlaceTerminalsLoginPasswordSerializer(serializers.ModelSerializer):
+    """
+    Только логин и пароль регистрации терминала.
+    """
+
+    class Meta:
+        model = ServicePlace
+        fields = ['passwordCheckoutTerminal', 'loginCheckoutTerminal']
+
 
 
 

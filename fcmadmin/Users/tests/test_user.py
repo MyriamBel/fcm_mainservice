@@ -1,10 +1,12 @@
-from django.test import TestCase, Client
+from django.test import TestCase
 from ..models import CustomUser, UserAdditionalEmail, Profile
 from django.contrib.auth import get_user_model
 
 
 class SetupTest(TestCase):
-    """ Test module for GET all puppies API """
+    """
+    Тестовые кейсы на правильность создания пользователя.
+    """
     def setUp(self):
         user = get_user_model()
         superuser = user.objects.create_superuser(email='superuser@mail.com', password='superuser')
@@ -19,11 +21,22 @@ class SetupTest(TestCase):
 
         superuser = user.objects.get(is_superuser=True)
 
-        i = 0
-        list_users = []
+        self.assertEqual(superuser.email, "superuser@mail.com")
 
-        while i < 4:
-            list_users.append(user.objects.get(email='user'+str(i)+'@mail.com'))
-            i += 1
-        print(list_users)
+    def test_get_user(self):
+        user = get_user_model()
+
+        some_user = user.objects.get(email="superuser@mail.com")
+
+        self.assertEqual(some_user.__class__, user)
+
+    def test_get_all_users(self):
+        user = get_user_model()
+        users = user.objects.all()
+
+        count = 0
+        for i in users:
+            count += 1
+
+        self.assertEqual(count, 6)
 

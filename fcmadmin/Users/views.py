@@ -32,7 +32,7 @@ class UserCreateView(generics.CreateAPIView):
     только администратор fcm или уже зарегистрированный пользователь может создать нового пользователя.
     """
     serializer_class = UserDetailSerializer
-    permission_classes = (permissions.IsAuthenticated, IsSuperuser, )
+    # permission_classes = (permissions.IsAuthenticated, IsSuperuser, )
 
 
 class UserListView(generics.ListAPIView):
@@ -41,7 +41,7 @@ class UserListView(generics.ListAPIView):
     """
     serializer_class = UserListSerializer
     queryset = User.objects.all()
-    permission_classes = (IsSuperuser, )
+    # permission_classes = (IsSuperuser, )
     paginators = (Standard10ResultsSetPagination, )
 
 
@@ -50,7 +50,7 @@ class UserUpdatePasswordView(generics.UpdateAPIView):
     Изменение пароля у пользователя.
     """
     serializer_class = UserPasswordChangeSerializer
-    permission_classes = [permissions.IsAuthenticated, IsSuperuser, ]
+    # permission_classes = [permissions.IsAuthenticated, IsSuperuser, ]
 
     def get_object(self, queryset=None):
         return self.request.user
@@ -62,7 +62,7 @@ class ProfileDetailView(generics.RetrieveAPIView):
     профиль извлекается тот, который привязан к пользователю.
     """
     serializer_class = ProfileDetailSerializer
-    permission_classes = [permissions.IsAuthenticated, IsSuperuser, ]
+    # permission_classes = [permissions.IsAuthenticated, IsSuperuser, ]
 
     # Извлекаем профиль, привязанный к пользователю
     def get_queryset(self):
@@ -80,7 +80,7 @@ class UserDetailProfile(generics.UpdateAPIView):
     """
     parser_classes = (parsers.MultiPartParser,)
     serializer_class = ProfileDetailSerializer
-    permission_classes = [permissions.IsAuthenticated, IsSuperuser, ]
+    # permission_classes = [permissions.IsAuthenticated, IsSuperuser, ]
 
     def get_queryset(self):
         user = User.objects.get(email=self.request.user)
