@@ -58,7 +58,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     #выставляется дата желаемого удаления пользователя:
     datetimeDeletion = models.DateTimeField(_('removal time'), blank=True, null=True)
     lastLogin = models.DateTimeField(_('last entrance'), auto_now=True)
-    whoAdded = models.OneToOneField('self', on_delete=models.SET_NULL, null=True, blank=False, related_name='added')
+    whoAdded = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='added')
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -140,8 +140,6 @@ class Profile(models.Model):
             return '{}'.format(self.surname)
         else:
             return '{}'.format(self.user.email)
-
-
 
 
 

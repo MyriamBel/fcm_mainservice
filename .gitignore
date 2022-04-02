@@ -164,22 +164,16 @@ dmypy.json
 .pyre/
 lib64
 /.idea/workspace.xml
-fCoffeeProject/local_settings.py
 lib64/**/*
-lib64
 /lib64
-fCoffeeProject/staticfiles
 auto_documentation/__pycache__
 __pycache__
-fCoffeeProject/__pycache__
-fCoffeeUsers/__pycache__
-fCoffeeUsers/migrations/__pycache__
-/fCoffeeProject/media/*
-fCoffeeProject/__pycache__/local_settings.cpython-39.pyc
-fCoffeeProject/__pycache__/settings.cpython-39.pyc
-fCoffeeProject/__pycache__/urls.cpython-39.pyc
+
 base/__pycache__/services.cpython-39.pyc
 auto_documentation/__pycache__/routes.cpython-39.pyc
 temp/*
 
 .idea/
+
+*/*/migrations/
+/*/*/migrations/

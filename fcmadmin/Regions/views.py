@@ -15,7 +15,7 @@ class CountryCreateView(generics.CreateAPIView):
     Cоздание нового объекта страны.
     """
     serializer_class = CountryAllFieldsSerializer
-    permission_classes = [IsSuperuser, ]
+    # permission_classes = [IsSuperuser, ]
 
 
 class CountryListView(generics.ListAPIView):
@@ -23,7 +23,7 @@ class CountryListView(generics.ListAPIView):
     Просмотр списка стран.
     """
     serializer_class = CountryAllFieldsSerializer
-    permission_classes = [IsSuperuser, ]
+    # permission_classes = [IsSuperuser, ]
     queryset = Country.objects.all()
 
 
@@ -32,7 +32,7 @@ class CountryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     Просмотр, изменение и удаление отдельного объекта страны.
     """
     serializer_class = CountryAllFieldsSerializer
-    permission_classes = [IsSuperuser, ]
+    # permission_classes = [IsSuperuser, ]
     queryset = Country.objects.all()
 
     def destroy(self, request, *args, **kwargs):
@@ -48,7 +48,7 @@ class CityCreateView(generics.CreateAPIView):
     Cоздание нового объекта города.
     """
     serializer_class = CityAllFieldsSerializer
-    permission_classes = [IsSuperuser, ]
+    # permission_classes = [IsSuperuser, ]
 
 
 class CityListView(generics.ListAPIView):
@@ -56,7 +56,7 @@ class CityListView(generics.ListAPIView):
     Просмотр списка городов.
     """
     serializer_class = CityAllFieldsSerializer
-    permission_classes = [IsSuperuser, ]
+    # permission_classes = [IsSuperuser, ]
     queryset = City.objects.all()
 
 
@@ -65,7 +65,7 @@ class CityRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     Просмотр, изменение и удаление отдельного объекта страны.
     """
     serializer_class = CityAllFieldsSerializer
-    permission_classes = [IsSuperuser, ]
+    # permission_classes = [IsSuperuser, ]
     queryset = City.objects.all()
 
     def destroy(self, request, *args, **kwargs):

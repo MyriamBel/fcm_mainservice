@@ -1,9 +1,12 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from base.services import get_image_upload, get_video_upload, delete_old_file
-from base.choices import Shape
+from base.choices import Shape, TerminalTypes
 from django.contrib.auth import get_user_model
 from Regions.models import City
+from base import generators
+import hashlib
+import uuid
 
 User = get_user_model()
 
@@ -16,8 +19,6 @@ class Franchise(models.Model):
     name = models.CharField(_('name'), max_length=100, unique=True, null=False, blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
-    franchiseOwner = models.OneToOneField(User, on_delete=models.PROTECT, blank=True)
-    franchiseFounder = models.ManyToManyField(User, blank=True, related_name='franchises')
 
     class Meta:
         verbose_name = _('franchise')
@@ -41,8 +42,6 @@ class Company(models.Model):
         Franchise, on_delete=models.PROTECT, blank=False)
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
-    companyDirector = models.OneToOneField(User, on_delete=models.PROTECT, blank=True)
-    companyFounder = models.ManyToManyField(User, blank=True, related_name='companies')
 
     class Meta:
         verbose_name = _('company')
@@ -57,6 +56,11 @@ class ServicePlace(models.Model):
     Точка обслуживания(оно же заведение) - место продаж/предоставления услуг, будь то кофейня, бар и т.д.
     У точки обслуживания есть руководитель(директор).
     В заведениях указывается схема столов.
+    Каждая точка обслуживания имеет привязанные к ней и только к ней кассовые(и официантские) терминалы.
+    Каждый такой терминал может относиться к точке реализации данного заведения.
+    Логины для регистрации терминалов уникальны в пределах всей системы и
+    генерируются автоматически при создании точки обслуживания.
+    Пароль также генерируется автоматически и не может быть изменен пользователем.
     """
     name = models.CharField(_('name'), max_length=100, null=False, blank=False)
     company = models.ForeignKey(
@@ -64,7 +68,6 @@ class ServicePlace(models.Model):
     )
     isActive = models.BooleanField(_('is active'), default=True)
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
-    servicePlaceDirector = models.OneToOneField(User, on_delete=models.PROTECT)
     city = models.ForeignKey(City, on_delete=models.PROTECT, blank=True)
     street = models.CharField(_('street'), max_length=100, null=False, blank=True)
     houseNumber = models.CharField(_('house number'), max_length=10, null=False, blank=True)
@@ -73,6 +76,13 @@ class ServicePlace(models.Model):
     longitude = models.DecimalField(_('longitude'), max_digits=10, decimal_places=7, null=False, blank=True)  # широта
     noteAddress = models.CharField(_('notes to the address'), max_length=100, null=False, blank=True)
     about = models.CharField(_('about object'), max_length=300, null=False, blank=True)
+    loginCheckoutTerminal = models.CharField(
+        _('login for checkout terminal registration'), null=False, editable=False, max_length=50,
+        unique=True
+    )
+    passwordCheckoutTerminal = models.CharField(
+        _('password for checkout terminal registration'), max_length=50, editable=False
+    )
 
     class Meta:
         verbose_name = _('service point')
@@ -80,6 +90,29 @@ class ServicePlace(models.Model):
 
     def __str__(self):
         return _(self.name)
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        """
+        salt является случайной последовательностью, добавленной к строке пароля перед использованием
+        хеш-функции.
+        salt используется для предотвращения перебора по словарю (dictionary attack) и атак радужной
+        таблицы (rainbow tables attacks).
+        """
+        if not self.pk:
+            checkoutterminal_login = ''
+            while checkoutterminal_login == '' or ServicePlace.objects.filter(loginCheckoutTerminal=checkoutterminal_login).exists():
+                checkoutterminal_login = generators.generate_checkoutterminal_login()
+            self.loginCheckoutTerminal = checkoutterminal_login
+            self.passwordCheckoutTerminal = generators.generate_checkoutterminal_password()
+            salt = uuid.uuid4().hex
+            self.passwordCheckoutTerminal = hashlib.sha256(salt.encode() + self.passwordCheckoutTerminal.encode()).hexdigest() + ':' + salt
+        super(ServicePlace, self).save()
+
+    def check_password(self, user_password):
+        gettedObject = ServicePlace.objects.get(loginCheckoutTerminal=self.loginCheckoutTerminal)
+        password, salt = gettedObject.loginCheckoutTerminal.split(':')
+        return password == hashlib.sha256(salt.encode() + user_password.encode()).hexdigest()
 
 
 class StoreHouse(models.Model):
@@ -190,6 +223,52 @@ class CookingPlace(models.Model):
         return _(self.name)
 
 
+# class ServicePlaceEmployees(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.PROTECT, blank=False)
+#     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.PROTECT, blank=False)
+#     isActive = models.BooleanField(_('is active'), default=True)
+#     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
+#
+#     class Meta:
+#         verbose_name = _('employee')
+#         verbose_name_plural = _('employees')
+#
+#     def __str__(self):
+#         return '{} - {}'.format(self.servicePlace, self.user)
+
+
+class Terminal(models.Model):
+    """
+    Кассовый терминал. Кассовый терминал - это некоторый экземпляр кассового приложения, установленный в точке
+    реализации в некотором заведении. Каждый кассовый терминал относится только к определенному заведению и
+    может относиться к некоторой точке реализации. Это значит, что привязка к заведению обязательна, а к точке
+    реализации - необязательна.
+    Для регистрации терминалов используем соответствующий логин и пароль из личного кабинета заведения.
+    Каждый кассовый терминал имеет информацию об устройстве, на котором он установлен.
+    Это включает в себя:
+    Производитель устройства
+    Модель устройства
+    Серийный номер устройства
+    Имеи устройства
+    """
+    name = models.CharField(_('name'), max_length=100, null=False, blank=False)
+    servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, blank=False)
+    isActive = models.BooleanField(_('is active'), default=True)
+    dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
+    deviceManufacturer = models.CharField(_('device manufacturer'), max_length=50, null=False, blank=False)
+    deviceModel = models.CharField(_('device model'), max_length=50, null=False, blank=False)
+    deviceSerialNumber = models.CharField(_('device serial number'), max_length=250, null=False, blank=False)
+    deviceIMEI = models.CharField(_('device IMEI'), max_length=250, null=False, blank=False)
+    terminalSubtype = models.CharField(max_length=10, choices=TerminalTypes.types_choices, default=TerminalTypes.CHECKOUT)
+
+    class Meta:
+        verbose_name = _('place of sale')
+        verbose_name_plural = _('places of sale')
+
+    def __str__(self):
+        return _(self.name)
+
+
 class SalePlace(models.Model):
     """
     Место реализации - все точки/сервисы, которые предоставляются из данной точки реализации.
@@ -205,6 +284,7 @@ class SalePlace(models.Model):
     dateJoined = models.DateTimeField(_('joining date'), auto_now_add=True, editable=False)
     #несколько мест реализации может относиться к нескольким местам приготовления(кухням)
     cookingPlace = models.ManyToManyField(CookingPlace, blank=True)
+    checkoutTerminal = models.ForeignKey(Terminal, null=False, blank=True, on_delete=models.PROTECT)
 
     class Meta:
         verbose_name = _('place of sale')
@@ -212,5 +292,3 @@ class SalePlace(models.Model):
 
     def __str__(self):
         return _(self.name)
-
-

@@ -11,13 +11,13 @@ from .views import CityCreateView, CityListView, CityRetrieveUpdateDestroyView
 3) Все это включается в общий набор urlpatterns.
 """
 
-app_name = 'chainManagement'
+app_name = 'regions'
 
 urlpatterns = []
 
 countries_patterns = [
     path('create/', CountryCreateView.as_view()),
-    path('all/', CountryListView.as_view()),
+    path('all/', CountryListView.as_view(), name='all_countries'),
     path('single/<int:pk>/', CountryRetrieveUpdateDestroyView.as_view()),
 ]
 

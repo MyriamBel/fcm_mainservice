@@ -21,4 +21,5 @@ urlpatterns = [
 urlpatterns +=[
    path(r'company/', include('Companies.urls')),
    path(r'users/', include('Users.urls')),
+   path(r'regions/', include('Regions.urls', namespace='regions')),
 ]

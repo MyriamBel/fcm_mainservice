@@ -34,8 +34,11 @@ def get_image_upload(instance, file):
     elif class_name.find('logo') != -1:
         path_to_file = os.path.join(MEDIA_ROOT, module_name, class_name,
                                     'logo', some_id, file)
+    elif class_name.find('image') != -1:
+        path_to_file = os.path.join(MEDIA_ROOT, module_name, class_name,
+                                    'image', some_id, file)
     else:
-        raise Exception('Поле для фото/логотипа не найдено')
+        raise Exception(_('Поле для фото/логотипа не найдено'))
     return path_to_file
 
 
