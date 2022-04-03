@@ -5,8 +5,10 @@ from .serializers import FranchiseAllFieldsSerializer
 from .serializers import ServicePlaceTerminalRegistrationSerializer
 from .serializers import ServicePlaceRegisterSerializer, ServicePlaceTerminalsLoginPasswordSerializer
 from .serializers import CompanySerializer
+# from .serializers import ServicePlaceAllFieldsSerializer
 from django.contrib.auth import get_user_model
 from .models import Franchise, ServicePlace, Company
+from .models import Terminal
 from rest_framework import parsers, generics, response, status, exceptions, permissions
 from django.utils.translation import gettext_lazy as _
 from base.paginators import Standard10ResultsSetPagination
@@ -23,7 +25,7 @@ class FranchiseCreateView(generics.CreateAPIView):
     Создание сети/франшизы.
     """
     serializer_class = FranchiseAllFieldsSerializer
-    # permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (IsSuperuser, )
     # parser_classes = (parsers.MultiPartParser, )
     queryset = Franchise.objects.all()
 
@@ -33,7 +35,7 @@ class FranchiseListView(generics.ListAPIView):
     Список всех брендов, зарегистрированных в системе.
     """
     serializer_class = FranchiseAllFieldsSerializer
-    # permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (IsSuperuser, )
     queryset = Franchise.objects.all()
 
 
@@ -42,9 +44,8 @@ class ServicePlaceCreateView(generics.CreateAPIView):
     Создание точки обслуживания.
     """
     serializer_class = ServicePlaceRegisterSerializer
-
-    def get_object(self):
-        return ServicePlace.objects.all()
+    permission_classes = (IsSuperuser, )
+    queryset = ServicePlace.objects.all()
 
 
 class ServicePlaceListView(generics.ListAPIView):
@@ -53,6 +54,7 @@ class ServicePlaceListView(generics.ListAPIView):
     """
     serializer_class = ServicePlaceRegisterSerializer
     queryset = ServicePlace.objects.all()
+    permission_classes = (IsSuperuser, )
 
 
 class CompanyCreateView(generics.CreateAPIView):
@@ -60,9 +62,8 @@ class CompanyCreateView(generics.CreateAPIView):
     Создание компании.
     """
     serializer_class = CompanySerializer
-
-    def get_object(self):
-        return Company.objects.all()
+    queryset = Company.objects.all()
+    permission_classes = (IsSuperuser, )
 
 
 class CompanyListView(generics.ListAPIView):
@@ -71,6 +72,7 @@ class CompanyListView(generics.ListAPIView):
     """
     serializer_class = CompanySerializer
     queryset = Company.objects.all()
+    permission_classes = (IsSuperuser, )
 
 
 @swagger_auto_schema(method='post', request_body=get_token_shema)
@@ -89,11 +91,12 @@ def servicePointCreatorView(request):
     return Response(data=serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# class ServicePlaceTerminalsLoginPasswordView(generics.RetrieveAPIView):
-#     """
-#     Получить логин и пароль регистрации терминала.
-#     """
-#     serializer_class = ServicePlaceTerminalsLoginPasswordSerializer
-#
-#     def get_object(self):
-# допишем позже, как разберемся с правами пользователей.
+#TODO дописать права доступа - только директор данного заведения, как разберемся с правами пользователей.
+class ServicePlaceTerminalsLoginPasswordView(generics.RetrieveAPIView):
+    """
+    Просмотреть логин и пароль регистрации терминала.
+    """
+    serializer_class = ServicePlaceTerminalsLoginPasswordSerializer
+    queryset = ServicePlace.objects.all()
+
+

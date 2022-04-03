@@ -4,11 +4,12 @@ from base.services import get_image_upload, get_video_upload, delete_old_file
 from base.choices import Shape, TerminalTypes
 from django.contrib.auth import get_user_model
 from Regions.models import City
-from base import generators
-import hashlib
-import uuid
-
+# from base import generators
+from base.generators import encrypt_string, decrypt_string, generate_hash_string, \
+generate_checkoutterminal_login, generate_checkoutterminal_password
+from django.core.exceptions import ValidationError
 User = get_user_model()
+import hashlib
 
 
 class BaseOrgInfo(models.Model):
@@ -102,17 +103,16 @@ class ServicePlace(BaseOrgInfo):
         if not self.pk:
             checkoutterminal_login = ''
             while checkoutterminal_login == '' or ServicePlace.objects.filter(loginCheckoutTerminal=checkoutterminal_login).exists():
-                checkoutterminal_login = generators.generate_checkoutterminal_login()
+                checkoutterminal_login = generate_checkoutterminal_login()
             self.loginCheckoutTerminal = checkoutterminal_login
-            self.passwordCheckoutTerminal = generators.generate_checkoutterminal_password()
-            salt = uuid.uuid4().hex
-            self.passwordCheckoutTerminal = hashlib.sha256(salt.encode() + self.passwordCheckoutTerminal.encode()).hexdigest() + ':' + salt
+            self.passwordCheckoutTerminal = generate_checkoutterminal_password()
+            self.passwordCheckoutTerminal = encrypt_string(self.passwordCheckoutTerminal)
         super(ServicePlace, self).save()
 
-    def check_password(self, user_password):
-        gettedObject = ServicePlace.objects.get(loginCheckoutTerminal=self.loginCheckoutTerminal)
-        password, salt = gettedObject.loginCheckoutTerminal.split(':')
-        return password == hashlib.sha256(salt.encode() + user_password.encode()).hexdigest()
+    @staticmethod
+    def check_password(login, password):
+        gettedObject = ServicePlace.objects.get(loginCheckoutTerminal=login)
+        return decrypt_string(gettedObject.passwordCheckoutTerminal) == password
 
 
 class StoreHouse(BaseOrgInfo):
@@ -237,11 +237,13 @@ class Terminal(BaseOrgInfo):
     Имеи устройства
     """
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, blank=False)
+    # deviceHash = models.BigIntegerField(editable=False)
     deviceManufacturer = models.CharField(_('device manufacturer'), max_length=50, null=False, blank=False)
     deviceModel = models.CharField(_('device model'), max_length=50, null=False, blank=False)
     deviceSerialNumber = models.CharField(_('device serial number'), max_length=250, null=False, blank=False)
     deviceIMEI = models.CharField(_('device IMEI'), max_length=250, null=False, blank=False)
     terminalSubtype = models.CharField(max_length=10, choices=TerminalTypes.types_choices, default=TerminalTypes.CHECKOUT)
+    token = models.CharField(_('token'), max_length=250, null=False, blank=True)
 
     class Meta:
         verbose_name = _('place of sale')
@@ -249,6 +251,31 @@ class Terminal(BaseOrgInfo):
 
     def __str__(self):
         return _(self.name)
+
+    def __eq__(self, other):
+        return (self.deviceIMEI, self.deviceManufacturer, self.deviceSerialNumber, self.deviceModel) == \
+               (self.deviceIMEI, self.deviceManufacturer, self.deviceSerialNumber, self.deviceModel)
+
+    def __hash__(self):
+        return hashlib.md5(str(self.deviceIMEI).encode() +
+                           str(self.deviceManufacturer).encode() +
+                           str(self.deviceSerialNumber).encode() +
+                           str(self.deviceModel).encode()).hexdigest()
+        # return hash(str(self.deviceIMEI)+str(self.deviceManufacturer)+str(self.deviceSerialNumber)+str(self.deviceModel))
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None, *args, **kwargs):
+        if not self.pk:
+            new_name = self.__hash__()
+            if not Terminal.objects.filter(name=new_name).exists():
+                self.name = new_name
+
+            else:
+                raise ValidationError(_("Combination of {}, {}, {}, {} not unique".format(self.deviceManufacturer,
+                                                                                          self.deviceModel,
+                                                                                          self.deviceSerialNumber,
+                                                                                          self.deviceIMEI)))
+        super(Terminal, self).save()
 
 
 class SalePlace(BaseOrgInfo):
@@ -271,3 +298,10 @@ class SalePlace(BaseOrgInfo):
 
     def __str__(self):
         return _(self.name)
+
+
+# class TerminalToken(models.Model):
+#     """
+#     Объект токена, который привязывается к определенному терминалу.
+#     """
+#     terminal = models.ForeignKey(Terminal, )

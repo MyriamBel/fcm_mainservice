@@ -1,9 +1,14 @@
+import hashlib
+import uuid
+
 from rest_framework import serializers, exceptions
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from .models import ServicePlace, Terminal, Company
 import jwt
 from fcmadmin.settings import SECRET_KEY, ALGORITHM
+from base.generators import decrypt_string
+from django.core.exceptions import ValidationError
 
 from .models import Franchise
 
@@ -60,10 +65,12 @@ class ServicePlaceTerminalRegistrationSerializer(serializers.Serializer):
         deviceIMEI = validated_data['deviceIMEI']
         terminalSubtype = validated_data['terminalSubtype']
 
+        print(validated_data)
+
         error_msg = _('login or password are incorrect')
         try:
             servicePlace = ServicePlace.objects.get(loginCheckoutTerminal=loginCheckoutTerminal)
-            if not servicePlace.check_password(passwordCheckoutTerminal):
+            if not servicePlace.check_password(loginCheckoutTerminal, passwordCheckoutTerminal):
                 raise serializers.ValidationError(error_msg)
             validated_data['servicePlace'] = servicePlace.pk
             validated_data['passwordCheckoutTerminal'] = passwordCheckoutTerminal
@@ -72,20 +79,26 @@ class ServicePlaceTerminalRegistrationSerializer(serializers.Serializer):
 
         return validated_data
 
-    def create_terminal(self):
-        object = TerminalSerializer(servicePlace=self.validated_data['servicePlace'])
-        object.save()
-        print(object.pk)
-        return object.pk
-
     def create(self, validated_data):
+        object = Terminal(servicePlace=ServicePlace.objects.get(pk=self.validated_data['servicePlace']))
+        object.deviceModel = validated_data["deviceModel"]
+        object.deviceSerialNumber = validated_data["deviceSerialNumber"]
+        object.deviceIMEI = validated_data["deviceIMEI"]
+        object.deviceManufacturer = validated_data["deviceManufacturer"]
+        try:
+            object.save(**validated_data)
+        except ValidationError as e:
+            raise exceptions.ValidationError(e.message)
+
         payload = {
             'iss': 'backend-api',
             'service_point_id': validated_data['servicePlace'],
-            'terminal_id': self.create_terminal(),
+            'terminal_id': object.pk,
             'terminal_type': validated_data['terminalSubtype'],
         }
         token = jwt.encode(payload=payload, key=SECRET_KEY, algorithm=ALGORITHM)
+        object.token = token
+        object.save()
 
         return {
             'terminalToken': token,
@@ -113,12 +126,18 @@ class ServicePlaceRegisterSerializer(serializers.ModelSerializer):
 
 class ServicePlaceTerminalsLoginPasswordSerializer(serializers.ModelSerializer):
     """
-    Только логин и пароль регистрации терминала.
+    # Только логин и пароль регистрации терминала.
     """
-
     class Meta:
         model = ServicePlace
         fields = ['passwordCheckoutTerminal', 'loginCheckoutTerminal']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['passwordCheckoutTerminal'] = decrypt_string(representation['passwordCheckoutTerminal'])
+        return representation
+
+
 
 
 

@@ -150,7 +150,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ('Users.auth_backend.AuthBackend', ),
     'DEFAULT_PERMISSIONS_CLASSES': [
         # 'rest_framework.permissions.AllowAny',
-        # 'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'TEST_REQUEST_DEFAULT_FORMAT': 'json'
     # 'UNICODE_JSON': 'True',

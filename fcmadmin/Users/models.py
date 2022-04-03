@@ -44,7 +44,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(password, email, **extra_fields)
 
 
-class CustomUser(AbstractBaseUser):
+class CustomUser(AbstractBaseUser, PermissionsMixin):
     """
     Кастомная модель пользователя.
     Здесь храним информацию, связанную со входом в систему.

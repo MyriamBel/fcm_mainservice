@@ -2,6 +2,7 @@ from django.urls import path, include
 from .views import FranchiseCreateView, FranchiseListView
 from .views import servicePointCreatorView
 from .views import ServicePlaceCreateView, ServicePlaceListView
+from .views import ServicePlaceTerminalsLoginPasswordView
 from .views import CompanyCreateView, CompanyListView
 
 """
@@ -25,9 +26,14 @@ company_patterns = [
     path('all/', CompanyListView.as_view()),
 ]
 
+individual_service_place_patterns = [
+    path('terminalinfo/', ServicePlaceTerminalsLoginPasswordView.as_view()),
+]
+
 service_place_patterns = [
     path('create/', ServicePlaceCreateView.as_view()),
-    path('all/', ServicePlaceListView.as_view())
+    path('all/', ServicePlaceListView.as_view()),
+    path('<int:pk>/', include(individual_service_place_patterns)),
 ]
 
 urlpatterns = [

@@ -54,8 +54,6 @@ class UserDetailSerializer(serializers.ModelSerializer):
         exclude = ("last_login", "is_active")
 
     def create(self, validated_data):
-        for i in validated_data:
-            print(i)
         return User.objects.create_user(**validated_data)
 
     def get_isActive(self):

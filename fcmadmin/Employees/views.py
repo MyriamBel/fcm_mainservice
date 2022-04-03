@@ -4,6 +4,7 @@ from .serializer import FranchiseFoundersSerializer
 from .serializer import CompanyFoundersSerializer
 from .serializer import ServicePlaceFoundersSerializer
 from .models import FranchiseFounders, CompanyFounders, ServicePlaceFounders
+from base.permissions import IsSuperuser
 
 
 class FranchiseFounderCreateView(generics.CreateAPIView):
@@ -12,6 +13,7 @@ class FranchiseFounderCreateView(generics.CreateAPIView):
     """
     serializer_class = FranchiseFoundersSerializer
     queryset = FranchiseFounders.objects.all()
+    permission_classes = (IsSuperuser, )
 
 
 class FranchiseFounderListView(generics.ListAPIView):
@@ -20,6 +22,7 @@ class FranchiseFounderListView(generics.ListAPIView):
     """
     serializer_class = FranchiseFoundersSerializer
     queryset = FranchiseFounders.objects.all()
+    permission_classes = (IsSuperuser, )
 
 
 class CompanyFounderCreateView(generics.CreateAPIView):
@@ -28,6 +31,7 @@ class CompanyFounderCreateView(generics.CreateAPIView):
     """
     queryset = CompanyFounders.objects.all()
     serializer_class = CompanyFoundersSerializer
+    permission_classes = (IsSuperuser, )
 
 
 class CompanyFounderListView(generics.ListAPIView):
@@ -36,6 +40,7 @@ class CompanyFounderListView(generics.ListAPIView):
     """
     queryset = CompanyFounders.objects.all()
     serializer_class = CompanyFoundersSerializer
+    permission_classes = (IsSuperuser, )
 
 
 class ServicePlaceFoundersCreateView(generics.CreateAPIView):
@@ -44,6 +49,7 @@ class ServicePlaceFoundersCreateView(generics.CreateAPIView):
     """
     queryset = ServicePlaceFounders
     serializer_class = ServicePlaceFoundersSerializer
+    permission_classes = (IsSuperuser, )
 
 
 class ServicePlaceFoundersListView(generics.ListAPIView):
@@ -52,3 +58,4 @@ class ServicePlaceFoundersListView(generics.ListAPIView):
     """
     queryset = ServicePlaceFounders
     serializer_class = ServicePlaceFoundersSerializer
+    permission_classes = (IsSuperuser, )
