@@ -47,11 +47,11 @@ class UserDetailSerializer(serializers.ModelSerializer):
         write_only=True,
     )
     lastLogin = serializers.CharField(source='last_login', required=False)
-    isActive = serializers.CharField(source='is_active')
+    isActive = serializers.CharField(source='is_active', required=False)
 
     class Meta:
         model = User
-        exclude = ("last_login", "is_active")
+        exclude = ("last_login", "is_active", "groups", "user_permissions")
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)

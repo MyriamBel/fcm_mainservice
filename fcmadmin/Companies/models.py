@@ -102,6 +102,7 @@ class ServicePlace(BaseOrgInfo):
         """
         if not self.pk:
             checkoutterminal_login = ''
+            # Строку ниже можно оптимизировать - вместо кучи запросов к бд сделать выборку в set и сверяться с ним.
             while checkoutterminal_login == '' or ServicePlace.objects.filter(loginCheckoutTerminal=checkoutterminal_login).exists():
                 checkoutterminal_login = generate_checkoutterminal_login()
             self.loginCheckoutTerminal = checkoutterminal_login
@@ -271,7 +272,7 @@ class Terminal(BaseOrgInfo):
                 self.name = new_name
 
             else:
-                raise ValidationError(_("Combination of {}, {}, {}, {} not unique".format(self.deviceManufacturer,
+                raise ValidationError(_("Combination of {}, {}, {}, {} is not unique".format(self.deviceManufacturer,
                                                                                           self.deviceModel,
                                                                                           self.deviceSerialNumber,
                                                                                           self.deviceIMEI)))

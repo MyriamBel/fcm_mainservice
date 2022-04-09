@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from Companies.models import Company, Franchise, ServicePlace
 from django.core.exceptions import ValidationError
+from base.generators import generate_pin
 
 """
 Группы пользователей, которые имеют отношение к тем или иным объектам франшизы(франшиза, сеть, заведение).
@@ -37,20 +38,12 @@ ServicePlaceWaiter - работа с заказами(создание, внес
 
 """
 
-
 user = get_user_model()
 
 
 class BaseStaff(models.Model):
     class Meta:
         abstract = True
-
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
-        try:
-            self.full_clean()
-        except ValidationError:
-            raise ValidationError("This user is already identified as the founder of this franchise.")
 
 
 class BaseFranchiseStaff(BaseStaff):
@@ -61,6 +54,13 @@ class BaseFranchiseStaff(BaseStaff):
 
     class Meta:
         abstract = True
+
+    # def save(self, force_insert=False, force_update=False, using=None,
+    #          update_fields=None):
+    #     try:
+    #         self.full_clean()
+    #     except ValidationError:
+    #         raise ValidationError(_("This user is already identified as the founder of this franchise."))
 
 
 class BaseCompanyStaff(BaseStaff):
@@ -81,6 +81,16 @@ class BaseServicePlaceStaff(BaseStaff):
 
     class Meta:
         abstract = True
+
+    # def save(self, *args, **kwargs):
+        # self.full_clean()
+        # super(BaseServicePlaceStaff, self).save(*args, **kwargs)
+        # try:
+        #     self.full_clean()
+        #     super(BaseServicePlaceStaff, self).save(*args, **kwargs)
+        # except ValidationError as e:
+        #     print(e.error_dict)
+        #     raise ValidationError(_("This user is already identified as the staff of this place."))
 
 
 class FranchiseFounders(BaseFranchiseStaff):
@@ -117,7 +127,6 @@ class FranchiseMarketer(BaseFranchiseStaff):
     Маркетолог франшизы.
     """
     marketer = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
 
     class Meta:
         constraints = [
@@ -293,7 +302,25 @@ class ServicePlaceCourier(BaseServicePlaceStaff):
         ]
 
 
-class ServicePlaceBarista(BaseServicePlaceStaff):
+class Cashier(BaseServicePlaceStaff):
+    """
+    Пин-код авторизации на кассовом терминале. У сотрудника может быть пин-код, а может не быть.
+    Пин-код состоит из 4 цифр, автоматически генерируемых системой. Как понять, что аккаунту нужно генерировать пин-код?
+    При регистрации аккаунта заполняется булево поле "isCashier".
+    Каждое заведение имеет свой набор уникальных пин-кодов для входа в терминал.
+    1 заведение - несколько пинкодов. Каждый пинкод однозначно идентифицирует сотрудника в отдельно взятом
+    заведении. В рамках заведения не может быть совпадающих пин-кодов.
+    В рамках множества заведений пин-коды могут совпадать, но только у разных заведений.
+    10!/4 = 3628800/4 = 1451520 комбинаций кодов возможно.
+    """
+    isCashier = models.BooleanField(default=False)
+    pin = models.IntegerField(null=True, blank=True, editable=False)
+
+    class Meta:
+        abstract = True
+
+
+class ServicePlaceBarista(Cashier):
     """
     Бариста заведения.
     """
@@ -304,8 +331,22 @@ class ServicePlaceBarista(BaseServicePlaceStaff):
             models.UniqueConstraint(fields=['barista', 'servicePlace'], name='ServicePlaceBarista')
         ]
 
+    def save(self, *args, **kwargs):
+        if self.isCashier:
+            pin = ''
+            obj = ServicePlaceBarista.objects.filter(servicePlace_id=self.servicePlace_id)
+            print(obj)
+            pins = set()
+            if obj:
+                for x in obj:
+                    pins.add(x.pin)
+            while pin == '' or pin in pins:
+                pin = generate_pin()
+            self.pin = pin
+        super(ServicePlaceBarista, self).save(*args, **kwargs)
 
-class ServicePlaceWaiter(BaseServicePlaceStaff):
+
+class ServicePlaceWaiter(Cashier):
     """
     Официант в заведении.
     """
@@ -315,3 +356,14 @@ class ServicePlaceWaiter(BaseServicePlaceStaff):
         constraints = [
             models.UniqueConstraint(fields=['waiter', 'servicePlace'], name='ServicePlaceWaiter')
         ]
+
+    # def save(self, force_insert=False, force_update=False, using=None,
+    #          update_fields=None, *args, **kwargs):
+    #     if self.isCashier is True:
+    #         pin = ''
+    #         # Строку ниже можно оптимизировать - вместо кучи запросов к бд сделать выборку в set и сверяться с ним.
+    #         while pin == '' or ServicePlaceWaiter.objects.filter(servicePlace=self.servicePlace).filter(
+    #                 pin=pin).exists():
+    #             pin = generate_pin()
+    #         self.pin = pin
+    #     super(ServicePlaceWaiter, self).save(*args, **kwargs)

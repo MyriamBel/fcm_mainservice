@@ -65,8 +65,6 @@ class ServicePlaceTerminalRegistrationSerializer(serializers.Serializer):
         deviceIMEI = validated_data['deviceIMEI']
         terminalSubtype = validated_data['terminalSubtype']
 
-        print(validated_data)
-
         error_msg = _('login or password are incorrect')
         try:
             servicePlace = ServicePlace.objects.get(loginCheckoutTerminal=loginCheckoutTerminal)
@@ -80,25 +78,25 @@ class ServicePlaceTerminalRegistrationSerializer(serializers.Serializer):
         return validated_data
 
     def create(self, validated_data):
-        object = Terminal(servicePlace=ServicePlace.objects.get(pk=self.validated_data['servicePlace']))
-        object.deviceModel = validated_data["deviceModel"]
-        object.deviceSerialNumber = validated_data["deviceSerialNumber"]
-        object.deviceIMEI = validated_data["deviceIMEI"]
-        object.deviceManufacturer = validated_data["deviceManufacturer"]
+        object_save = Terminal(servicePlace=ServicePlace.objects.get(pk=self.validated_data['servicePlace']))
+        object_save.deviceModel = validated_data["deviceModel"]
+        object_save.deviceSerialNumber = validated_data["deviceSerialNumber"]
+        object_save.deviceIMEI = validated_data["deviceIMEI"]
+        object_save.deviceManufacturer = validated_data["deviceManufacturer"]
         try:
-            object.save(**validated_data)
+            object_save.save(**validated_data)
         except ValidationError as e:
             raise exceptions.ValidationError(e.message)
 
         payload = {
             'iss': 'backend-api',
             'service_point_id': validated_data['servicePlace'],
-            'terminal_id': object.pk,
+            'terminal_id': object_save.pk,
             'terminal_type': validated_data['terminalSubtype'],
         }
         token = jwt.encode(payload=payload, key=SECRET_KEY, algorithm=ALGORITHM)
-        object.token = token
-        object.save()
+        object_save.token = token
+        object_save.save()
 
         return {
             'terminalToken': token,

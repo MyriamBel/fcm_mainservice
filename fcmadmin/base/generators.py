@@ -3,6 +3,15 @@ import string
 import cryptocode
 
 letters_and_digits = string.ascii_letters + string.digits
+digits = string.digits
+
+
+def generate_pin():
+    """
+    Генерация пин-кодов сотрудникам заведений.
+    """
+    pin_string = ''.join(random.choice(digits) for i in range(4))
+    return pin_string
 
 
 def generate_random_string(leng):
