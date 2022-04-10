@@ -44,6 +44,9 @@ INSTALLED_APPS = [
     'Regions',
     'Nomenclature',
     'Employees',
+    'Clients',
+    'Shifts',
+    'Orders',
 ]
 
 MIDDLEWARE = [

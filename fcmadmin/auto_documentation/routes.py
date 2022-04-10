@@ -23,4 +23,5 @@ urlpatterns +=[
    path(r'users/', include('Users.urls')),
    path(r'regions/', include('Regions.urls')),
    path(r'employees/', include('Employees.urls')),
+   path(r'shifts/', include('Shifts.urls')),
 ]

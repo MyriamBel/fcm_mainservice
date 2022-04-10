@@ -125,7 +125,7 @@ class LoginSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         access_payload = {
-            'iss': 'backend-api',
+            'iss': 'fcm-backend-api',
             'user_id': validated_data['user'].id,
             'exp': datetime.utcnow() + timedelta(minutes=JWT_ACCESS_TTL),
             'type': 'access'
@@ -133,7 +133,7 @@ class LoginSerializer(serializers.Serializer):
         access = jwt.encode(payload=access_payload, key=SECRET_KEY, algorithm=ALGORITHM)
 
         refresh_payload = {
-            'iss': 'backend-api',
+            'iss': 'fcm-backend-api',
             'userId': validated_data['user'].id,
             'exp': datetime.utcnow() + timedelta(minutes=JWT_REFRESH_TTL),
             'type': 'refresh'

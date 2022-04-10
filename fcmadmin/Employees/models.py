@@ -242,6 +242,25 @@ class CompanyHR(BaseCompanyStaff):
         ]
 
 
+class Cashier(BaseServicePlaceStaff):
+    """
+    Кассир. Т.е., имеющий доступ к кассовому терминалу.
+    Пин-код нужен для авторизации на кассовом терминале. У сотрудника может быть пин-код, а может не быть.
+    Пин-код состоит из 4 цифр, автоматически генерируемых системой. Как понять, что аккаунту нужно генерировать пин-код?
+    При регистрации аккаунта заполняется булево поле "isCashier".
+    Каждое заведение имеет свой набор уникальных пин-кодов для входа в терминал.
+    1 заведение - несколько пинкодов. Каждый пинкод однозначно идентифицирует сотрудника в отдельно взятом
+    заведении. В рамках заведения не может быть совпадающих пин-кодов.
+    В рамках множества заведений пин-коды могут совпадать, но только у разных заведений.
+    10!/4 = 3628800/4 = 1451520 комбинаций кодов возможно.
+    """
+    isCashier = models.BooleanField(default=False)
+    pin = models.IntegerField(null=True, blank=True, editable=False)
+
+    class Meta:
+        abstract = True
+
+
 class ServicePlaceFounders(BaseServicePlaceStaff):
     """
     Учредители и акционеры заведения.
@@ -254,7 +273,7 @@ class ServicePlaceFounders(BaseServicePlaceStaff):
         ]
 
 
-class ServicePlaceDirector(BaseServicePlaceStaff):
+class ServicePlaceDirector(Cashier):
     """
     Руководитель заведения.
     """
@@ -264,6 +283,19 @@ class ServicePlaceDirector(BaseServicePlaceStaff):
         constraints = [
             models.UniqueConstraint(fields=['director', 'servicePlace'], name='ServicePlaceDirector')
         ]
+
+    def save(self, *args, **kwargs):
+        if self.isCashier:
+            pin = ''
+            obj = ServicePlaceDirector.objects.filter(servicePlace_id=self.servicePlace)
+            pins = set()
+            if obj:
+                for x in obj:
+                    pins.add(x.pin)
+            while pin == '' or pin in pins:
+                pin = generate_pin()
+            self.pin = pin
+        super(ServicePlaceDirector, self).save(*args, **kwargs)
 
 
 class ServicePlaceAccountant(BaseServicePlaceStaff):
@@ -278,7 +310,7 @@ class ServicePlaceAccountant(BaseServicePlaceStaff):
         ]
 
 
-class ServicePlaceAdministrator(BaseServicePlaceStaff):
+class ServicePlaceAdministrator(Cashier):
     """
     Администратор заведения.
     """
@@ -288,6 +320,19 @@ class ServicePlaceAdministrator(BaseServicePlaceStaff):
         constraints = [
             models.UniqueConstraint(fields=['administrator', 'servicePlace'], name='ServicePlaceAdministrator')
         ]
+
+    def save(self, *args, **kwargs):
+        if self.isCashier:
+            pin = ''
+            obj = ServicePlaceAdministrator.objects.filter(servicePlace_id=self.servicePlace)
+            pins = set()
+            if obj:
+                for x in obj:
+                    pins.add(x.pin)
+            while pin == '' or pin in pins:
+                pin = generate_pin()
+            self.pin = pin
+        super(ServicePlaceAdministrator, self).save(*args, **kwargs)
 
 
 class ServicePlaceCourier(BaseServicePlaceStaff):
@@ -300,24 +345,6 @@ class ServicePlaceCourier(BaseServicePlaceStaff):
         constraints = [
             models.UniqueConstraint(fields=['courier', 'servicePlace'], name='ServicePlaceCourier')
         ]
-
-
-class Cashier(BaseServicePlaceStaff):
-    """
-    Пин-код авторизации на кассовом терминале. У сотрудника может быть пин-код, а может не быть.
-    Пин-код состоит из 4 цифр, автоматически генерируемых системой. Как понять, что аккаунту нужно генерировать пин-код?
-    При регистрации аккаунта заполняется булево поле "isCashier".
-    Каждое заведение имеет свой набор уникальных пин-кодов для входа в терминал.
-    1 заведение - несколько пинкодов. Каждый пинкод однозначно идентифицирует сотрудника в отдельно взятом
-    заведении. В рамках заведения не может быть совпадающих пин-кодов.
-    В рамках множества заведений пин-коды могут совпадать, но только у разных заведений.
-    10!/4 = 3628800/4 = 1451520 комбинаций кодов возможно.
-    """
-    isCashier = models.BooleanField(default=False)
-    pin = models.IntegerField(null=True, blank=True, editable=False)
-
-    class Meta:
-        abstract = True
 
 
 class ServicePlaceBarista(Cashier):
@@ -334,8 +361,7 @@ class ServicePlaceBarista(Cashier):
     def save(self, *args, **kwargs):
         if self.isCashier:
             pin = ''
-            obj = ServicePlaceBarista.objects.filter(servicePlace_id=self.servicePlace_id)
-            print(obj)
+            obj = ServicePlaceBarista.objects.filter(servicePlace_id=self.servicePlace)
             pins = set()
             if obj:
                 for x in obj:
@@ -357,13 +383,15 @@ class ServicePlaceWaiter(Cashier):
             models.UniqueConstraint(fields=['waiter', 'servicePlace'], name='ServicePlaceWaiter')
         ]
 
-    # def save(self, force_insert=False, force_update=False, using=None,
-    #          update_fields=None, *args, **kwargs):
-    #     if self.isCashier is True:
-    #         pin = ''
-    #         # Строку ниже можно оптимизировать - вместо кучи запросов к бд сделать выборку в set и сверяться с ним.
-    #         while pin == '' or ServicePlaceWaiter.objects.filter(servicePlace=self.servicePlace).filter(
-    #                 pin=pin).exists():
-    #             pin = generate_pin()
-    #         self.pin = pin
-    #     super(ServicePlaceWaiter, self).save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if self.isCashier:
+            pin = ''
+            obj = ServicePlaceWaiter.objects.filter(servicePlace_id=self.servicePlace)
+            pins = set()
+            if obj:
+                for x in obj:
+                    pins.add(x.pin)
+            while pin == '' or pin in pins:
+                pin = generate_pin()
+            self.pin = pin
+        super(ServicePlaceWaiter, self).save(*args, **kwargs)
