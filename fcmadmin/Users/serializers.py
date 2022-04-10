@@ -174,7 +174,6 @@ class RefreshSerializer(serializers.Serializer):
             error_msg = {'refreshToken': _('Refresh token is expired!')}
             raise serializers.ValidationError(error_msg)
         except jwt.InvalidTokenError as e:
-            print(e)
             error_msg = {'refreshToken': _('Refresh token is invalid!')}
             raise serializers.ValidationError(error_msg)
 
