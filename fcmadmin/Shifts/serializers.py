@@ -4,6 +4,9 @@ from django.utils.translation import gettext_lazy as _
 from fcmadmin.settings import SECRET_KEY, ALGORITHM, JWT_ACCESS_TTL, JWT_REFRESH_TTL
 from Employees.models import Cashier
 from datetime import datetime, timedelta
+from django.contrib.auth import get_user_model
+
+user = get_user_model()
 
 
 class StaffDeviceLoginSerializer(serializers.Serializer):
@@ -20,6 +23,7 @@ class StaffDeviceLoginSerializer(serializers.Serializer):
         validated_data = super(StaffDeviceLoginSerializer, self).validate(attrs)
         terminalToken = validated_data.pop("terminalToken")
         userPin = validated_data.pop("userPin")
+        print(userPin)
         try:
             payload = jwt.decode(terminalToken, key=SECRET_KEY, algorithms=ALGORITHM)
         except jwt.PyJWTError:
@@ -38,6 +42,7 @@ class StaffDeviceLoginSerializer(serializers.Serializer):
                                                     "Check your pin or contact the administrator."))
         validated_data["userPin"] = userPin
         validated_data["servicePlace"] = servicePlace
+        validated_data["user_id"] = staff.pop().user.pk
         print(validated_data)
         return validated_data
 
@@ -45,6 +50,7 @@ class StaffDeviceLoginSerializer(serializers.Serializer):
         access_payload = {
             'iss': 'fcm-backend-api',
             'userPin': validated_data['userPin'],
+            "user_id": validated_data["user_id"],
             'servicePlace': validated_data['servicePlace'],
             'exp': datetime.utcnow() + timedelta(minutes=JWT_ACCESS_TTL),
             'type': 'access'
@@ -54,6 +60,7 @@ class StaffDeviceLoginSerializer(serializers.Serializer):
         refresh_payload = {
             'iss': 'fcm-backend-api',
             'userPin': validated_data['userPin'],
+            "user_id": validated_data["user_id"],
             'servicePlace': validated_data['servicePlace'],
             'exp': datetime.utcnow() + timedelta(minutes=JWT_REFRESH_TTL),
             'type': 'refresh'
@@ -79,7 +86,6 @@ class StaffDeviceRefreshSerializer(serializers.Serializer):
     def validate(self, attrs):
         # standard validation
         validated_data = super().validate(attrs)
-        print(validated_data)
 
         # validate refresh
         refresh_token = validated_data['refreshToken']
@@ -106,14 +112,16 @@ class StaffDeviceRefreshSerializer(serializers.Serializer):
         if payload["servicePlace"] != servicePlace:
             raise serializers.ValidationError("This token not for this place.")
         validated_data = payload
-        print(validated_data)
+        validated_data["user_id"] = payload["user_id"]
         return validated_data
 
     def create(self, validated_data):
         access_payload = {
                 'iss': 'fcm-backend-api',
+                # 'user_id': ''
                 'userPin': validated_data['userPin'],
-                'servicePlace': validated_data['servicePlace'],
+            "user_id": validated_data["user_id"],
+            'servicePlace': validated_data['servicePlace'],
                 'exp': datetime.utcnow() + timedelta(minutes=JWT_ACCESS_TTL),
                 'type': 'access'
         }
@@ -122,6 +130,7 @@ class StaffDeviceRefreshSerializer(serializers.Serializer):
         refresh_payload = {
                 'iss': 'fcm-backend-api',
                 'userPin': validated_data['userPin'],
+                "user_id": validated_data["user_id"],
                 'servicePlace': validated_data['servicePlace'],
                 'exp': datetime.utcnow() + timedelta(minutes=JWT_REFRESH_TTL),
                 'type': 'refresh'

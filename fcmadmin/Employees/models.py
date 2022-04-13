@@ -42,6 +42,7 @@ user = get_user_model()
 
 
 class BaseStaff(models.Model):
+    user = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
     class Meta:
         abstract = True
 
@@ -54,6 +55,9 @@ class BaseFranchiseStaff(BaseStaff):
 
     class Meta:
         abstract = True
+        # constraints = [
+        #     models.UniqueConstraint(fields=['user', 'brand'], name='FranchiseStaff')
+        # ]
 
     # def save(self, force_insert=False, force_update=False, using=None,
     #          update_fields=None):
@@ -71,6 +75,9 @@ class BaseCompanyStaff(BaseStaff):
 
     class Meta:
         abstract = True
+        # constraints = [
+        #     models.UniqueConstraint(fields=['user', 'conpany'], name='CompanyStaff')
+        # ]
 
 
 class BaseServicePlaceStaff(BaseStaff):
@@ -81,6 +88,9 @@ class BaseServicePlaceStaff(BaseStaff):
 
     class Meta:
         abstract = True
+        # constraints = [
+        #     models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceStaff')
+        # ]
 
     # def save(self, *args, **kwargs):
         # self.full_clean()
@@ -98,15 +108,15 @@ class FranchiseFounders(BaseFranchiseStaff):
     Учредители и акционеры франшизы.
 
     """
-    founder = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    # founder = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['founder', 'brand'], name='FranchiseFounders')
+            models.UniqueConstraint(fields=['user', 'brand'], name='FranchiseFounders')
         ]
 
     def clean(self):
-        if FranchiseFounders.objects.filter(brand=self.brand).filter(founder=self.founder).exists():
+        if FranchiseFounders.objects.filter(brand=self.brand).filter(user=self.user).exists():
             raise ValidationError(_('This user is already identified as the founder of this franchise.'))
 
 
@@ -114,11 +124,11 @@ class FranchiseDirector(BaseFranchiseStaff):
     """
     Руководитель франшизы, региональный директор.
     """
-    director = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # director = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['director', 'brand'], name='FranchiseDirector')
+            models.UniqueConstraint(fields=['user', 'brand'], name='FranchiseDirector')
         ]
 
 
@@ -126,11 +136,11 @@ class FranchiseMarketer(BaseFranchiseStaff):
     """
     Маркетолог франшизы.
     """
-    marketer = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # marketer = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['marketer', 'brand'], name='FranchiseMarketer')
+            models.UniqueConstraint(fields=['user', 'brand'], name='FranchiseMarketer')
         ]
 
 
@@ -138,11 +148,11 @@ class FranchiseSupervisor(BaseFranchiseStaff):
     """
     Руководитель направления франшизы (продажи/открытие точек)
     """
-    supervisor = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # supervisor = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['supervisor', 'brand'], name='FranchiseSupervisor')
+            models.UniqueConstraint(fields=['user', 'brand'], name='FranchiseSupervisor')
         ]
 
 
@@ -150,11 +160,11 @@ class FranchiseAccountant(BaseFranchiseStaff):
     """
     Бухгалтер сети.
     """
-    accountant = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # accountant = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['accountant', 'brand'], name='FranchiseAccountant')
+            models.UniqueConstraint(fields=['user', 'brand'], name='FranchiseAccountant')
         ]
 
 
@@ -162,11 +172,11 @@ class FranchiseHR(BaseFranchiseStaff):
     """
     Кадровик франшизы.
     """
-    hr = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # hr = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['hr', 'brand'], name='FranchiseHR')
+            models.UniqueConstraint(fields=['user', 'brand'], name='FranchiseHR')
         ]
 
 
@@ -174,11 +184,11 @@ class CompanyFounders(BaseCompanyStaff):
     """
     Учредители и акционеры сети.
     """
-    founder = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # founder = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['founder', 'company'], name='CompanyFounders')
+            models.UniqueConstraint(fields=['user', 'company'], name='CompanyFounders')
         ]
 
 
@@ -186,11 +196,11 @@ class CompanyDirector(BaseCompanyStaff):
     """
     Руководитель сети.
     """
-    director = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # director = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['director', 'company'], name='CompanyDirector')
+            models.UniqueConstraint(fields=['user', 'company'], name='CompanyDirector')
         ]
 
 
@@ -198,11 +208,11 @@ class CompanyMarketer(BaseCompanyStaff):
     """
     Маркетолог сети.
     """
-    marketer = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # marketer = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['marketer', 'company'], name='CompanyMarketer')
+            models.UniqueConstraint(fields=['user', 'company'], name='CompanyMarketer')
         ]
 
 
@@ -210,11 +220,11 @@ class CompanySupervisor(BaseCompanyStaff):
     """
     Руководитель направления в сети (продажи/открытие точек)
     """
-    supervisor = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # supervisor = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['supervisor', 'company'], name='CompanySupervisor')
+            models.UniqueConstraint(fields=['user', 'company'], name='CompanySupervisor')
         ]
 
 
@@ -222,11 +232,11 @@ class CompanyAccountant(BaseCompanyStaff):
     """
     Бухгалтер сети.
     """
-    accountant = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # accountant = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['accountant', 'company'], name='CompanyAccountant')
+            models.UniqueConstraint(fields=['user', 'company'], name='CompanyAccountant')
         ]
 
 
@@ -234,11 +244,11 @@ class CompanyHR(BaseCompanyStaff):
     """
     Кадровик сети.
     """
-    hr = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # hr = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['hr', 'company'], name='CompanyHR')
+            models.UniqueConstraint(fields=['user', 'company'], name='CompanyHR')
         ]
 
 
@@ -265,11 +275,11 @@ class ServicePlaceFounders(BaseServicePlaceStaff):
     """
     Учредители и акционеры заведения.
     """
-    founder = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # founder = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['founder', 'servicePlace'], name='ServicePlaceFounders')
+            models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceFounders')
         ]
 
 
@@ -277,11 +287,11 @@ class ServicePlaceDirector(Cashier):
     """
     Руководитель заведения.
     """
-    director = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # director = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['director', 'servicePlace'], name='ServicePlaceDirector')
+            models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceDirector')
         ]
 
     def save(self, *args, **kwargs):
@@ -302,11 +312,11 @@ class ServicePlaceAccountant(BaseServicePlaceStaff):
     """
     Бухгалтер заведения.
     """
-    accountant = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # accountant = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['accountant', 'servicePlace'], name='ServicePlaceAccountant')
+            models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceAccountant')
         ]
 
 
@@ -314,11 +324,11 @@ class ServicePlaceAdministrator(Cashier):
     """
     Администратор заведения.
     """
-    administrator = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # administrator = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['administrator', 'servicePlace'], name='ServicePlaceAdministrator')
+            models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceAdministrator')
         ]
 
     def save(self, *args, **kwargs):
@@ -339,11 +349,11 @@ class ServicePlaceCourier(BaseServicePlaceStaff):
     """
     Курьер.
     """
-    courier = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # courier = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['courier', 'servicePlace'], name='ServicePlaceCourier')
+            models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceCourier')
         ]
 
 
@@ -351,11 +361,11 @@ class ServicePlaceBarista(Cashier):
     """
     Бариста заведения.
     """
-    barista = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # barista = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['barista', 'servicePlace'], name='ServicePlaceBarista')
+            models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceBarista')
         ]
 
     def save(self, *args, **kwargs):
@@ -376,11 +386,11 @@ class ServicePlaceWaiter(Cashier):
     """
     Официант в заведении.
     """
-    waiter = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-
+    # waiter = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    #
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['waiter', 'servicePlace'], name='ServicePlaceWaiter')
+            models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceWaiter')
         ]
 
     def save(self, *args, **kwargs):

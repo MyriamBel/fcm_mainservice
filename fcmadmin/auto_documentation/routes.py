@@ -24,4 +24,5 @@ urlpatterns +=[
    path(r'regions/', include('Regions.urls')),
    path(r'employees/', include('Employees.urls')),
    path(r'shifts/', include('Shifts.urls')),
+   path(r'nomenclature/', include('Nomenclature.urls')),
 ]
