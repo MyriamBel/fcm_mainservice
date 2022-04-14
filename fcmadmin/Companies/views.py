@@ -83,9 +83,11 @@ def servicePointCreatorView(request):
     Приходит логин и пароль заведения + информация устройства, на котором устанавливается терминал.
     Возвращается - уникальный токен для идентификации терминала.
     """
+    print("Hello")
     serializer_class = ServicePlaceTerminalRegistrationSerializer(data=request.data)
-
+    print("Serializer getted!")
     if serializer_class.is_valid():
+        print("Validated!")
         response_data = serializer_class.create(serializer_class.validated_data)
         return Response(response_data)
     return Response(data=serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)

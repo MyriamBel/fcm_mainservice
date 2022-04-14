@@ -113,7 +113,7 @@ class ServicePlace(BaseOrgInfo):
     @staticmethod
     def check_password(login, password):
         gettedObject = ServicePlace.objects.get(loginCheckoutTerminal=login)
-        return decrypt_string(gettedObject.passwordCheckoutTerminal) == password
+        return gettedObject.passwordCheckoutTerminal == password
 
 
 class StoreHouse(BaseOrgInfo):

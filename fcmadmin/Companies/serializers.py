@@ -1,6 +1,3 @@
-import hashlib
-import uuid
-
 from rest_framework import serializers, exceptions
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
@@ -9,6 +6,7 @@ import jwt
 from fcmadmin.settings import SECRET_KEY, ALGORITHM
 from base.generators import decrypt_string
 from django.core.exceptions import ValidationError
+from base.choices import TerminalTypes
 
 from .models import Franchise
 
@@ -47,7 +45,8 @@ class ServicePlaceTerminalRegistrationSerializer(serializers.Serializer):
     deviceModel = serializers.CharField(required=True, write_only=True)
     deviceSerialNumber = serializers.CharField(required=True, write_only=True)
     deviceIMEI = serializers.CharField(required=True, write_only=True)
-    terminalSubtype = serializers.CharField(required=True, write_only=True)
+    # terminalSubtype = serializers.CharField(required=True, write_only=True)
+    terminalSubtype = serializers.ChoiceField(required=True, write_only=True, choices=TerminalTypes.types_choices)
     # ==== OUTPUT ====
     terminalToken = serializers.CharField(read_only=True)
     servicePlace = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -65,15 +64,15 @@ class ServicePlaceTerminalRegistrationSerializer(serializers.Serializer):
         deviceIMEI = validated_data['deviceIMEI']
         terminalSubtype = validated_data['terminalSubtype']
 
-        error_msg = _('login or password are incorrect')
         try:
             servicePlace = ServicePlace.objects.get(loginCheckoutTerminal=loginCheckoutTerminal)
-            if not servicePlace.check_password(loginCheckoutTerminal, passwordCheckoutTerminal):
-                raise serializers.ValidationError(error_msg)
-            validated_data['servicePlace'] = servicePlace.pk
-            validated_data['passwordCheckoutTerminal'] = passwordCheckoutTerminal
         except ServicePlace.DoesNotExist:
-            raise serializers.ValidationError(error_msg)
+            raise serializers.ValidationError(_('login are incorrect'))
+        answer = servicePlace.check_password(loginCheckoutTerminal, passwordCheckoutTerminal)
+        if not answer:
+            raise serializers.ValidationError(_('password are incorrect'))
+        validated_data['servicePlace'] = servicePlace.pk
+        validated_data['passwordCheckoutTerminal'] = passwordCheckoutTerminal
 
         return validated_data
 

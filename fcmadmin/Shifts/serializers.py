@@ -43,7 +43,6 @@ class StaffDeviceLoginSerializer(serializers.Serializer):
         validated_data["userPin"] = userPin
         validated_data["servicePlace"] = servicePlace
         validated_data["user_id"] = staff.pop().user.pk
-        print(validated_data)
         return validated_data
 
     def create(self, validated_data):
