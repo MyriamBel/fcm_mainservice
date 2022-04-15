@@ -43,6 +43,8 @@ user = get_user_model()
 
 class BaseStaff(models.Model):
     user = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
+    isActive = models.BooleanField(default=True, blank=True)
+
     class Meta:
         abstract = True
 

@@ -81,30 +81,6 @@ class DishTags(BaseNomenclature):
     """
 
 
-# class DishSubCategory(BaseNomenclature):
-#     """
-#     Категория (группа) блюд. Их можно группировать по определенным признакам.
-#     Например, "Напитки" или "Горячие бутерброды".
-#     Каждая категория может относиться к некоторому меню, которое привязано к заведению через главное меню.
-#     А может не относиться к меню, если она, например, в черновике. Тогда она не отображается на терминале.
-#     Тогда нужно знать, к какому заведению относится эта категория, чтобы отображать в админке только категории,
-#     созданные для данного заведения.
-#     """
-#     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, null=False, blank=False)
-#     description = models.CharField(_('description'), max_length=300, null=False, blank=True)
-#     dishCategory = models.ForeignKey(DishCategory, blank=True, on_delete=models.SET_DEFAULT, default='')
-#     #Категория может вкладываться в другую категорию - образуется иерархия категорий. Например: салаты-постные, без майонеза и т.д.
-#     # единица измерения, привязанная к категории меню.
-#     measureUnit = models.ForeignKey(MeasureUnit, on_delete=models.PROTECT, null=False, blank=True)
-#
-#     class Meta:
-#         verbose_name = _('dish subcategory')
-#         verbose_name_plural = _('dishes subcategories')
-#
-#     def __str__(self):
-#         return _(self.name)
-
-
 class Dish(BaseNomenclature):
     """
     Блюдо - некоторый товар, продукт, который будет продаваться на кассовом терминале.

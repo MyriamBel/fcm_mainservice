@@ -35,6 +35,16 @@ class DishTagsCreateSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class DishTagsListSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор названия тега. Для вывода списка тегов в зависимости от выбранного пункта меню.
+    """
+
+    class Meta:
+        model = DishTags
+        fields = ["name", ]
+
+
 class DishesCreateSerializer(serializers.ModelSerializer):
     """
     Сериализатор для блюд.

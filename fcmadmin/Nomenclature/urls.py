@@ -1,7 +1,7 @@
 from django.urls.conf import path, include
 from .views import MenuCreateView, DishCategoryCreateView
 from .views import DishTagsCreateView, DishesCreateView
-from .views import DishCategoryListView
+from .views import DishCategoryListView, DishTagsByCategoryIdListView
 
 app_name = "Nomenclature"
 
@@ -12,10 +12,11 @@ menus_patterns = [
 categories_patterns = [
     path('create/', DishCategoryCreateView.as_view()),
     path('all/', DishCategoryListView.as_view()),
+    path('<int:pk>/', DishTagsByCategoryIdListView.as_view()),
 ]
 
 dishtags_patterns = [
-    path('create/', DishTagsCreateView.as_view())
+    path('create/', DishTagsCreateView.as_view()),
 ]
 
 dish_patterns = [

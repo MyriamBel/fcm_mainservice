@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from .models import Menu, DishCategory, DishTags, Dish
 from .serializers import MenuAllFieldsSerializer, DishCategoryCreateSerializer
 from .serializers import DishTagsCreateSerializer, DishesCreateSerializer
-from .serializers import DishCategoryImgNameFieldsSerializer
+from .serializers import DishCategoryImgNameFieldsSerializer, DishTagsListSerializer
 from base.permissions import IsSuperuser, IsCashier
 
 User = get_user_model()
@@ -62,6 +62,38 @@ class DishTagsCreateView(generics.CreateAPIView):
     serializer_class = DishTagsCreateSerializer
     queryset = DishTags.objects.all()
     permission_classes = (IsSuperuser, )
+
+
+class DishTagsByCategoryIdListView(generics.ListAPIView):
+    """
+    Список тегов какого-либо пункта меню.
+    """
+    serializer_class = DishTagsListSerializer
+    permission_classes = (IsCashier, )
+
+    def get_queryset(self):
+        """
+        Получить список тегов, относящихся к пункту меню.
+        Выбираются все активные блюда данного пункта меню(категории), из них выбираются теги.
+        """
+        if getattr(self, 'swagger_fake_view', False):
+            # queryset just for schema generation metadata
+            return DishTags.objects.none()
+        else:
+            if 'pk' in self.kwargs:
+                dishcategory = self.kwargs['pk']
+                try:
+                    category = DishCategory.objects.get(pk=dishcategory)
+                except DishCategory.DoesNotExist:
+                    raise exceptions.NotFound(_(f'Dish category not found.'))
+                if category.isActive is not True:
+                    raise exceptions.PermissionDenied(_('Dish category is not active.'))
+                list_tags = DishTags.objects.exclude(isActive=False).exclude(dish__isActive=False).\
+                    filter(dish__dishCategory=category)
+                set_tags = set()
+                for i in list_tags:
+                    set_tags.add(i)
+                return set_tags
 
 
 class DishesCreateView(generics.CreateAPIView):

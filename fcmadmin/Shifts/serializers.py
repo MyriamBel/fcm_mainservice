@@ -40,13 +40,20 @@ class StaffDeviceLoginSerializer(serializers.Serializer):
         if not staff:
             raise exceptions.AuthenticationFailed(_("Staff with this pin not found. "
                                                     "Check your pin or contact the administrator."))
+        staff = staff.pop()
+        validated_data["token_type"] = "cashier"
+        validated_data["staff_role"] = staff.__class__.__name__
+        validated_data["staff_id"] = staff.pk
         validated_data["userPin"] = userPin
         validated_data["servicePlace"] = servicePlace
-        validated_data["user_id"] = staff.pop().user.pk
+        validated_data["user_id"] = staff.user.pk
         return validated_data
 
     def create(self, validated_data):
-        access_payload = {
+        payload = {
+            "token_type": validated_data["token_type"],
+            "staff_role": validated_data["staff_role"],
+            "staff_id": validated_data["staff_id"],
             'iss': 'fcm-backend-api',
             'userPin': validated_data['userPin'],
             "user_id": validated_data["user_id"],
@@ -54,18 +61,12 @@ class StaffDeviceLoginSerializer(serializers.Serializer):
             'exp': datetime.utcnow() + timedelta(minutes=JWT_ACCESS_TTL),
             'type': 'access'
         }
+
+        access_payload = {**payload, 'type': 'access'}
         access = jwt.encode(payload=access_payload, key=SECRET_KEY, algorithm=ALGORITHM)
 
-        refresh_payload = {
-            'iss': 'fcm-backend-api',
-            'userPin': validated_data['userPin'],
-            "user_id": validated_data["user_id"],
-            'servicePlace': validated_data['servicePlace'],
-            'exp': datetime.utcnow() + timedelta(minutes=JWT_REFRESH_TTL),
-            'type': 'refresh'
-        }
+        refresh_payload = {**payload, 'type': 'refresh'}
         refresh = jwt.encode(payload=refresh_payload, key=SECRET_KEY, algorithm=ALGORITHM)
-
         return {
             'access': access,
             'refresh': refresh
@@ -119,8 +120,8 @@ class StaffDeviceRefreshSerializer(serializers.Serializer):
                 'iss': 'fcm-backend-api',
                 # 'user_id': ''
                 'userPin': validated_data['userPin'],
-            "user_id": validated_data["user_id"],
-            'servicePlace': validated_data['servicePlace'],
+                "user_id": validated_data["user_id"],
+                'servicePlace': validated_data['servicePlace'],
                 'exp': datetime.utcnow() + timedelta(minutes=JWT_ACCESS_TTL),
                 'type': 'access'
         }
