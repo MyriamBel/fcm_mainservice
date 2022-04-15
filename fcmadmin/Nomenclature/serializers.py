@@ -42,7 +42,7 @@ class DishTagsListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DishTags
-        fields = ["name", ]
+        fields = ["pk", "name", ]
 
 
 class DishesCreateSerializer(serializers.ModelSerializer):
