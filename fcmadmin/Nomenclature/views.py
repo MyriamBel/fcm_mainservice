@@ -6,8 +6,10 @@ from rest_framework.response import Response
 
 from .models import Menu, DishCategory, DishTags, Dish
 from .serializers import MenuAllFieldsSerializer, DishCategoryCreateSerializer
-from .serializers import DishTagsCreateSerializer, DishesCreateSerializer
-from .serializers import DishCategoryImgNameFieldsSerializer, DishTagsListSerializer
+from .serializers import DishTagsAllFieldsSerializer, DishesCreateSerializer
+from .serializers import DishCategoryImgNameFieldsSerializer, DishTagsIdNameSerializer
+from .serializers import DishNamePriceWithTotalSerializer
+
 from base.permissions import IsSuperuser, IsCashier
 
 User = get_user_model()
@@ -59,16 +61,25 @@ class DishTagsCreateView(generics.CreateAPIView):
     """
     Создание тегов для блюд.
     """
-    serializer_class = DishTagsCreateSerializer
+    serializer_class = DishTagsAllFieldsSerializer
     queryset = DishTags.objects.all()
     permission_classes = (IsSuperuser, )
+
+
+class DishTagsListView(generics.ListAPIView):
+    """
+    Список тегов для блюд.
+    """
+    serializer_class = DishTagsAllFieldsSerializer
+    queryset = DishTags.objects.all()
+    permission_classes = (IsCashier, )
 
 
 class DishTagsByCategoryIdListView(generics.ListAPIView):
     """
     Список тегов какого-либо пункта меню.
     """
-    serializer_class = DishTagsListSerializer
+    serializer_class = DishTagsIdNameSerializer
     permission_classes = (IsCashier, )
 
     def get_queryset(self):
@@ -105,11 +116,40 @@ class DishesCreateView(generics.CreateAPIView):
     permission_classes = (IsSuperuser, )
 
 
+class DishesFromCategoryWithTagsListSerializer(generics.ListAPIView):
+    """
+    Вывод списка блюд, относящихся к определенному пункту меню и имеющих определенный тег.
+    """
+    serializer_class = DishNamePriceWithTotalSerializer
+    permission_classes = (IsCashier, )
+
+    def get_queryset(self):
+        if 'pk' in self.kwargs:
+            dishcategory = self.kwargs['pk']
+            query_params = self.request.query_params
+            data = Dish.objects.exclude(isActive=False).exclude(dishTag__isActive=False)
+            if "tag" in query_params.keys():
+                tag = query_params["tag"]
+                return data.filter(dishTag=tag).filter(dishCategory=dishcategory)
+            return data.filter(dishCategory=dishcategory)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        count = queryset.count()
+        return Response({"count": count, "data": serializer.data})
+
+
 class DishCategoryListView(generics.ListAPIView):
     """
     Список всех категорий меню.
     """
-    from rest_framework import permissions
 
     serializer_class = DishCategoryImgNameFieldsSerializer
     queryset = DishCategory.objects.all()
@@ -122,6 +162,8 @@ class DishCategoryListView(generics.ListAPIView):
     #     return Response({"otv": otv})
 
     # def check_permissions(self, request):
+        # from rest_framework import permissions
+
     #     for permission in self.get_permissions():
     #         print(permission)
     #         if not permission.has_permission(request, self):

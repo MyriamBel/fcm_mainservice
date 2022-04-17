@@ -25,7 +25,7 @@ class DishCategoryCreateSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class DishTagsCreateSerializer(serializers.ModelSerializer):
+class DishTagsAllFieldsSerializer(serializers.ModelSerializer):
     """
     Сериализатор для тегов блюд.
     """
@@ -35,9 +35,9 @@ class DishTagsCreateSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class DishTagsListSerializer(serializers.ModelSerializer):
+class DishTagsIdNameSerializer(serializers.ModelSerializer):
     """
-    Сериализатор названия тега. Для вывода списка тегов в зависимости от выбранного пункта меню.
+    Сериализатор тега. Id, name. Для вывода списка тегов в зависимости от выбранного пункта меню.
     """
 
     class Meta:
@@ -47,11 +47,25 @@ class DishTagsListSerializer(serializers.ModelSerializer):
 
 class DishesCreateSerializer(serializers.ModelSerializer):
     """
-    Сериализатор для блюд.
+    Сериализатор для блюд - все поля.
     """
     class Meta:
         model = Dish
         fields = "__all__"
+
+
+class DishNamePriceWithTotalSerializer(serializers.ModelSerializer):
+    """
+    Сериализaтор для блюд - название и цена.
+    """
+    # records_total = serializers.SerializerMethodField()
+    #
+    # def get_records_total(self, instance):
+    #     return instance.__class__.objects.count()
+
+    class Meta:
+        model = Dish
+        fields = ["id", "name", "price", "dishTag", "dishCategory"]
 
 
 class DishCategoryImgNameFieldsSerializer(serializers.ModelSerializer):
