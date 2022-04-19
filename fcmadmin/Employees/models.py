@@ -277,8 +277,7 @@ class ServicePlaceFounders(BaseServicePlaceStaff):
     """
     Учредители и акционеры заведения.
     """
-    # founder = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-    #
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceFounders')
@@ -289,8 +288,7 @@ class ServicePlaceDirector(Cashier):
     """
     Руководитель заведения.
     """
-    # director = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-    #
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceDirector')
@@ -314,8 +312,7 @@ class ServicePlaceAccountant(BaseServicePlaceStaff):
     """
     Бухгалтер заведения.
     """
-    # accountant = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-    #
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceAccountant')
@@ -326,8 +323,7 @@ class ServicePlaceAdministrator(Cashier):
     """
     Администратор заведения.
     """
-    # administrator = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-    #
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceAdministrator')
@@ -351,8 +347,7 @@ class ServicePlaceCourier(BaseServicePlaceStaff):
     """
     Курьер.
     """
-    # courier = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-    #
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceCourier')
@@ -363,8 +358,7 @@ class ServicePlaceBarista(Cashier):
     """
     Бариста заведения.
     """
-    # barista = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-    #
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceBarista')
@@ -388,8 +382,7 @@ class ServicePlaceWaiter(Cashier):
     """
     Официант в заведении.
     """
-    # waiter = models.ForeignKey(user, on_delete=models.PROTECT, null=False, blank=False)
-    #
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'servicePlace'], name='ServicePlaceWaiter')

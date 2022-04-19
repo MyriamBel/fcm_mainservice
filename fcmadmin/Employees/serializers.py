@@ -75,7 +75,7 @@ class ServicePlaceBaristaSerializer(ServicePlaceEmloyeesSerializer):
     Сериализатор для объекта ServicePlaceBarista - учётной записи бариста в заведении. Бариста может иметь право
     работать с кассой - булево поле isCashier.
     """
-    barista = serializers.PrimaryKeyRelatedField(queryset=user.objects.all())
+    # barista = serializers.PrimaryKeyRelatedField(queryset=user.objects.all())
 
     class Meta:
         model = ServicePlaceBarista

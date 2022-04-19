@@ -1,11 +1,11 @@
 from rest_framework import serializers, exceptions
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from .models import ServicePlace, Terminal, Company
+from .models import ServicePlace, Terminal, Company, Room
 import jwt
 from fcmadmin.settings import SECRET_KEY, ALGORITHM
 from base.generators import decrypt_string
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from base.choices import TerminalTypes
 
 from .models import Franchise
@@ -133,6 +133,35 @@ class ServicePlaceTerminalsLoginPasswordSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['passwordCheckoutTerminal'] = decrypt_string(representation['passwordCheckoutTerminal'])
         return representation
+
+
+class RoomAllFieldSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для зала точки обслуживания. В заведении могут быть несколько помещений(залов),
+    где размещаются посетители. В этом сериализаторе используем все поля модели.
+    """
+    class Meta:
+        model = Room
+        fields = "__all__"
+
+    def validate(self, attrs):
+        print(self.context['request'])
+        print(attrs)
+        serviceplace = None
+        request = self.context['request'].parser_context.get('kwargs').get('pk')
+        if request:
+            serviceplace = request
+        try:
+            serviceplace_object = ServicePlace.objects.get(pk=serviceplace)
+        except ObjectDoesNotExist:
+            raise exceptions.DRFValidationError(_(f'Service place with pk {serviceplace} not found.'))
+        else:
+            attrs['servicePlace'] = serviceplace_object
+        validated_data = super().validate(attrs)
+        return validated_data
+
+    # def create(self, validated_data):
+
 
 
 
