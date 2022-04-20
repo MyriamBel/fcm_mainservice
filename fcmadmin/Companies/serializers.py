@@ -1,7 +1,7 @@
 from rest_framework import serializers, exceptions
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from .models import ServicePlace, Terminal, Company, Room
+from .models import ServicePlace, Terminal, Company, Room, Table
 import jwt
 from fcmadmin.settings import SECRET_KEY, ALGORITHM
 from base.generators import decrypt_string
@@ -144,23 +144,39 @@ class RoomAllFieldSerializer(serializers.ModelSerializer):
         model = Room
         fields = "__all__"
 
-    def validate(self, attrs):
-        print(self.context['request'])
-        print(attrs)
-        serviceplace = None
-        request = self.context['request'].parser_context.get('kwargs').get('pk')
-        if request:
-            serviceplace = request
-        try:
-            serviceplace_object = ServicePlace.objects.get(pk=serviceplace)
-        except ObjectDoesNotExist:
-            raise exceptions.DRFValidationError(_(f'Service place with pk {serviceplace} not found.'))
-        else:
-            attrs['servicePlace'] = serviceplace_object
-        validated_data = super().validate(attrs)
-        return validated_data
+    # def validate(self, attrs):
+    #     print(self.context['request'])
+    #     serviceplace = None
+    #     request = self.context['request'].parser_context.get('kwargs').get('pk')
+    #     if request:
+    #         serviceplace = request
+    #     try:
+    #         serviceplace_object = ServicePlace.objects.get(pk=serviceplace)
+    #     except ServicePlace.ObjectDoesNotExist:
+    #         raise exceptions.DRFValidationError(_(f'Service place with pk {serviceplace} not found.'))
+    #     else:
+    #         attrs['servicePlace'] = serviceplace_object
+    #     validated_data = super().validate(attrs)
+    #     return validated_data
 
-    # def create(self, validated_data):
+
+class TableAllFieldsSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор столов. Все поля.
+    """
+    class Meta:
+        model = Table
+        fields = "__all__"
+
+
+class TableIdNameTypeCapacitySizeFieldsSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор столов. Поля: имя, макс вместимость, тип стола, длина и ширина.
+    """
+    class Meta:
+        model = Table
+        fields = ["shape", "maxCapacity", "id", "name", "length", "width"]
+
 
 
 

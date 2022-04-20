@@ -40,11 +40,9 @@ class IsCashier(permissions.IsAuthenticated):
         # Извлечем полезные данные из токенов терминала и пользователя
         parsedToken = TokenParser()
         terminalParsedPayload = parsedToken.parse_token(terminalToken["terminalToken"])
-        print(terminalParsedPayload)
         userParsedPayload = parsedToken.parse_token(authToken["userToken"])
-        print(userParsedPayload)
         #TODO:
-        # Временный костыль, пока тип токена не пропишем в пэйлоад токена юзера системы и токена терминала.
+        # Временный костыль, пока тип токена не пропишем в пэйлоуд токена юзера системы и токена терминала.
         # if "token_type" not in terminalParsedPayload.keys():
         #     return False
         servicePlace = userParsedPayload["servicePlace"]
@@ -67,13 +65,21 @@ class IsCashier(permissions.IsAuthenticated):
             servicePlaceObject = servicePlaceClass.objects.get(pk=servicePlace)
         except servicePlaceClass.DoesNotExist:
             return False
-        print(cashier.user)
+        # print(servicePlaceObject.isActive is True)
+        # print(servicePlace == terminalParsedPayload["service_point_id"])
+        # print(terminalParsedPayload["terminal_type"].lower() == "checkout")
+        # print(user.is_active is True)
+        # print(cashier.isActive is True)
+        # print(cashier.user.pk == userParsedPayload["user_id"])
+
         return (servicePlaceObject.isActive is True) & \
                (servicePlace == terminalParsedPayload["service_point_id"]) & \
                (terminalParsedPayload["terminal_type"].lower() == "checkout") & \
                (user.is_active is True) & \
                (cashier.isActive is True) & \
                (cashier.user.pk == userParsedPayload["user_id"])
+
+
 
 
 # class IsServicePointDirector(permissions.IsAuthenticated):

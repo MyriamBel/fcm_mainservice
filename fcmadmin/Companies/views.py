@@ -1,20 +1,21 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import api_view
 
-from .serializers import FranchiseAllFieldsSerializer
+from .serializers import TableAllFieldsSerializer, TableIdNameTypeCapacitySizeFieldsSerializer
 from .serializers import ServicePlaceTerminalRegistrationSerializer
 from .serializers import ServicePlaceRegisterSerializer, ServicePlaceTerminalsLoginPasswordSerializer
-from .serializers import CompanySerializer
+from .serializers import CompanySerializer, FranchiseAllFieldsSerializer
 from .serializers import RoomAllFieldSerializer
 
 # from .serializers import ServicePlaceAllFieldsSerializer
 from django.contrib.auth import get_user_model
-from .models import Franchise, ServicePlace, Company
+from .models import Franchise, ServicePlace, Company, Table
 from .models import Terminal, Room
 from rest_framework import parsers, generics, response, status, exceptions, permissions
 from django.utils.translation import gettext_lazy as _
 from base.paginators import Standard10ResultsSetPagination
 from base.permissions import IsSuperuser, IsCashier
+from base.checkers import TokenParser
 from .api_shemas import get_token_shema
 from rest_framework.response import Response
 
@@ -28,21 +29,36 @@ class RoomCreateView(generics.CreateAPIView):
     """
     serializer_class = RoomAllFieldSerializer
     permission_classes = (IsSuperuser, )
+    queryset = Room.objects.all()
 
-    def get_queryset(self):
-        return Room.objects.all()
 
-    def perform_create(self, serializer):
-        if 'pk' in self.kwargs:
-            pk = self.kwargs["pk"]
-            try:
-                serviceplace = ServicePlace.objects.get(id=pk)
-            except ServicePlace.DoesNotExist:
-                return exceptions.NotFound(_(f'Service place not found.'))
-            return serializer.save(aervicePlace=serviceplace)
-
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
+# class RoomCreateView(generics.CreateAPIView):
+#     """
+#     Создание помещения(зала) в торговой точке.
+#     """
+#     serializer_class = RoomAllFieldSerializer
+#     permission_classes = (IsSuperuser, )
+#
+#     def get_queryset(self):
+#         return Room.objects.all()
+#
+#     def perform_create(self, serializer):
+#         print(self.kwargs)
+#         if 'pk' in self.kwargs:
+#             pk = self.kwargs["pk"]
+#             try:
+#                 serviceplace = ServicePlace.objects.get(id=pk)
+#             except ServicePlace.DoesNotExist:
+#                 return exceptions.NotFound(_(f'Service place not found.'))
+#             print(serviceplace.pk)
+#             return serializer.save()
+#
+#     #TODO мне не нравится такое решение - выдергивать из словаря аргументов пк.
+#     # Поищу лучший способ заполнить обязательный параметр.
+#     def post(self, request, *args, **kwargs):
+#         if "pk" in self.kwargs:
+#             self.request.data["servicePlace"] = kwargs["pk"]
+#         return self.create(request, *args, **kwargs)
 
     # def create(self, request, *args, **kwargs):
     #     serializer = self.get_serializer(data=request.data)
@@ -70,13 +86,9 @@ class RoomListView(generics.ListAPIView):
     permission_classes = (IsCashier, )
 
     def get_queryset(self):
-        if 'pk' in self.kwargs:
-            pk = self.kwargs["pk"]
-            try:
-                sp = ServicePlace.objects.get(pk=pk)
-                return Room.objects.filter(servicePlace=sp)
-            except ServicePlace.DoesNotExist:
-                raise exceptions.NotFound(_(f'Service place not found.'))
+        payload = TokenParser().parse_token(token=self.request.headers["Device"])
+        servicePlace = payload["service_point_id"]
+        return Room.objects.filter(servicePlace=servicePlace).exclude(isActive=False)
 
 
 class FranchiseCreateView(generics.CreateAPIView):
@@ -142,11 +154,8 @@ def servicePointCreatorView(request):
     Приходит логин и пароль заведения + информация устройства, на котором устанавливается терминал.
     Возвращается - уникальный токен для идентификации терминала.
     """
-    print("Hello")
     serializer_class = ServicePlaceTerminalRegistrationSerializer(data=request.data)
-    print("Serializer getted!")
     if serializer_class.is_valid():
-        print("Validated!")
         response_data = serializer_class.create(serializer_class.validated_data)
         return Response(response_data)
     return Response(data=serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -159,5 +168,74 @@ class ServicePlaceTerminalsLoginPasswordView(generics.RetrieveAPIView):
     """
     serializer_class = ServicePlaceTerminalsLoginPasswordSerializer
     queryset = ServicePlace.objects.all()
+    permission_classes = (IsSuperuser, )
 
 
+class TableCreateView(generics.CreateAPIView):
+    """
+    Создать стол.
+    """
+    serializer_class = TableAllFieldsSerializer
+    queryset = Table.objects.all()
+    permission_classes = (IsSuperuser, )
+
+
+class TableListView(generics.ListAPIView):
+    """
+    Получить список столов в определенном зале в заведении.
+    """
+    serializer_class = TableIdNameTypeCapacitySizeFieldsSerializer
+    permission_classes = (IsCashier, )
+
+    def get_queryset(self):
+        if "pk" in self.kwargs:
+            pk = self.kwargs["pk"]
+            print(pk)
+            payload = TokenParser().parse_token(token=self.request.headers["Device"])
+            servicePlace = payload["service_point_id"]
+            try:
+                room = Room.objects.get(pk=pk)
+            except Room.DoesNotExist:
+                raise exceptions.NotFound(_("Room not found."))
+            if room.isActive is not True:
+                raise exceptions.PermissionDenied(_("Room is not active."))
+            if not room.servicePlace.pk == servicePlace:
+                raise exceptions.PermissionDenied(_("This room not for you're place."))
+            return Table.objects.filter(room=room.pk).exclude(isActive=False)
+        else:
+            raise exceptions.ValidationError(_("service place not found."))
+
+#
+#
+# class TableCreateView(generics.CreateAPIView):
+#     """
+#     Создать стол в заведении.
+#     """
+#     serializer_class = TableAllFieldsSerializer
+#     queryset = Table.objects.all()
+#     permission_classes = (IsSuperuser, )
+#
+#     def perform_create(self, serializer):
+#         print(self.kwargs)
+#         if 'pk' in self.kwargs:
+#             pk = self.kwargs["pk"]
+#             try:
+#                 serviceplace = ServicePlace.objects.get(id=pk)
+#             except ServicePlace.DoesNotExist:
+#                 return exceptions.NotFound(_(f'Service place not found.'))
+#             if 'roomPk' in self.kwargs:
+#                 roomPk = self.kwargs["roomPk"]
+#                 try:
+#                     room = Room.objects.get(id=roomPk)
+#                 except Room.DoesNotExist:
+#                     return exceptions.NotFound(_(f'Room not found.'))
+#                 return serializer.save()
+#
+#     #TODO мне не нравится такое решение - выдергивать из словаря аргументов пк.
+#     # Поищу лучший способ заполнить обязательный параметр.
+#     def post(self, request, *args, **kwargs):
+#         if "pk" in self.kwargs:
+#             self.request.data["servicePlace"] = kwargs["pk"]
+#         if 'roomPk' in self.kwargs:
+#             self.request.data["room"] = kwargs["roomPk"]
+#         return self.create(request, *args, **kwargs)

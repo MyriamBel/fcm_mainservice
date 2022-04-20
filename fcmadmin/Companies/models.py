@@ -138,9 +138,13 @@ class StoreHouse(BaseOrgInfo):
 class Room(BaseOrgInfo):
     """
     Помещение - обособленная площадь, относящаяся к точке обслуживания, предназначено для размещения посетителей.
-    Точка обслуживания может иметь 1 и более помещений, как, например, 1й и 2й этаж или внутреннее помещение и террасса.
+    Точка обслуживания может иметь 1 и более помещений, как, например, 1й и 2й этаж или внутреннее
+    помещение и терраса.
     """
     servicePlace = models.ForeignKey(ServicePlace, on_delete=models.CASCADE, blank=False)
+    shape = models.CharField(_('table shape'), max_length=3, choices=Shape.shape_choices, default=Shape.RECTANGULAR)
+    length = models.DecimalField(_("length"), decimal_places=2, max_digits=5, null=True, blank=True)
+    width = models.DecimalField(_("width"), decimal_places=2, max_digits=5, null=True, blank=True)
 
     class Meta:
         verbose_name = _('room')
@@ -162,7 +166,9 @@ class Table(BaseOrgInfo):
     maxCapacity = models.IntegerField(_('maximum number of guests')) #максимальное число гостей
     reservable = models.BooleanField(_('reservable'), default=True) #Участвует ли в резервировании
     isBusy = models.BooleanField(_('is busy'), default=False) #Флаг "занят"
-    reservationStart = models.DateTimeField(_('datetime of the start of the reservation')) #время начала резервирования
+    reservationStart = models.DateTimeField(_('datetime of the start of the reservation'), blank=True, null=True) #время начала резервирования
+    length = models.DecimalField(_("max length"), decimal_places=2, max_digits=5, null=True, blank=True)
+    width = models.DecimalField(_("max width"), decimal_places=2, max_digits=5, null=True, blank=True)
 
     class Meta:
         verbose_name = _('table')

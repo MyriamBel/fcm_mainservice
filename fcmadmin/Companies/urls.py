@@ -5,6 +5,7 @@ from .views import ServicePlaceCreateView, ServicePlaceListView
 from .views import ServicePlaceTerminalsLoginPasswordView
 from .views import CompanyCreateView, CompanyListView
 from .views import RoomCreateView, RoomListView
+from .views import TableCreateView, TableListView
 
 """
 Схема урлов: 
@@ -27,14 +28,18 @@ company_patterns = [
     path('all/', CompanyListView.as_view()),
 ]
 
+tables_patterns = [
+    path('create/', TableCreateView.as_view()),
+]
+
 rooms_patterns = [
     path('create/', RoomCreateView.as_view()),
     path('all/', RoomListView.as_view()),
+    path('<int:pk>/tables/', TableListView.as_view()),
 ]
 
 individual_service_place_patterns = [
     path('terminalinfo/', ServicePlaceTerminalsLoginPasswordView.as_view()),
-    path('rooms/', include(rooms_patterns)),
 ]
 
 service_place_patterns = [
@@ -48,4 +53,6 @@ urlpatterns = [
     path('terminals/', include(terminal_patterns)),
     path('companies/', include(company_patterns)),
     path('places/', include(service_place_patterns)),
+    path('rooms/', include(rooms_patterns)),
+    path('tables/', include(tables_patterns)),
 ]
